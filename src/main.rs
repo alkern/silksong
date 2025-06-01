@@ -1,8 +1,10 @@
 mod core;
+mod level;
 mod math;
 mod state;
 
 use crate::core::CoreGamePlugin;
+use crate::level::demo::DemoPlugin;
 use crate::state::GameStatePlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
@@ -16,10 +18,13 @@ fn main() {
             meta_check: AssetMetaCheck::Never,
             ..default()
         }))
-        // custom plugin
+        // game plugins
         .add_plugins(GameStatePlugin)
         .add_plugins(CoreGamePlugin)
-        //
+        // level plugins
+        .add_plugins(DemoPlugin)
+        // camera
+        .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
         .run();
 }
