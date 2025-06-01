@@ -14,10 +14,6 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
-    commands.spawn(Sprite {
-        image: asset_server.load("ducky.png"),
-        ..Default::default()
-    });
 }
