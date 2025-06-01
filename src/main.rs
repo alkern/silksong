@@ -1,3 +1,8 @@
+mod core;
+mod state;
+
+use crate::core::CoreGamePlugin;
+use crate::state::GameStatePlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
 
@@ -10,6 +15,10 @@ fn main() {
             meta_check: AssetMetaCheck::Never,
             ..default()
         }))
+        // custom plugin
+        .add_plugins(GameStatePlugin)
+        .add_plugins(CoreGamePlugin)
+        //
         .add_systems(Startup, setup)
         .run();
 }
