@@ -1,6 +1,6 @@
-use std::ops::Deref;
 use crate::state::GameState;
 use bevy::prelude::*;
+use std::ops::Deref;
 
 pub struct CoreGamePlugin;
 

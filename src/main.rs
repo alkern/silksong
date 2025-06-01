@@ -1,6 +1,6 @@
 mod core;
-mod state;
 mod math;
+mod state;
 
 use crate::core::CoreGamePlugin;
 use crate::state::GameStatePlugin;
