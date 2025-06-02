@@ -4,8 +4,8 @@ use bevy::prelude::*;
 #[derive(States, Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AppState {
     /// Setup of the whole application
-    Setup,
-    Menu,
+    // Setup,
+    // Menu,
     #[default]
     /// In game state for the player: [`GameState`]
     Game,

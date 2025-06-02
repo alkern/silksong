@@ -3,6 +3,7 @@ mod level;
 mod math;
 mod state;
 mod visuals;
+mod music;
 
 use crate::core::CoreGamePlugin;
 use crate::level::creative_mode::CreativeModePlugin;

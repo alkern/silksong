@@ -1,10 +1,11 @@
 //! # Creative Mode
 //!
 //! Free Mode in which every element can be placed and playing is possible at all times.
-//! This is the goal for the game jam, a tutorial and puzzle mode would be even cooler, but not 
+//! This is the goal for the game jam, a tutorial and puzzle mode would be even cooler, but not
 //! possible in the time.
 
 use crate::core::{CoreAssets, LevelConfig, Note, Trigger};
+use crate::music::NaturalMinorScale;
 use crate::state::GameState;
 use bevy::prelude::*;
 
@@ -50,7 +51,10 @@ impl ComputedStates for CreativeModeState {
 }
 
 fn setup_config(mut commands: Commands) {
-    commands.insert_resource(LevelConfig { grow_factor: 100.0 });
+    commands.insert_resource(LevelConfig {
+        grow_factor: 100.0,
+        scale: NaturalMinorScale::new(crate::music::Note::A),
+    });
 }
 
 fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {

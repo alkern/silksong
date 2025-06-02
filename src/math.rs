@@ -1,16 +1,8 @@
+use crate::music::Scale;
 use bevy::prelude::*;
 use std::f32::consts::PI;
 
-//TODO model scale
-pub struct Scale(u8);
-
-impl Scale {
-    pub fn size(&self) -> u8 {
-        self.0
-    }
-}
-
-pub fn calculate_scale_position_by_angle(center: &Vec2, point: &Vec2, scale: &Scale) -> u8 {
+pub fn calculate_scale_position_by_angle(center: &Vec2, point: &Vec2, scale: &impl Scale) -> u8 {
     let direction = point - center;
     let (angle_x, angle_y) = match direction.try_normalize() {
         None => (0.0, 0.0),
@@ -32,9 +24,24 @@ pub fn calculate_scale_position_by_angle(center: &Vec2, point: &Vec2, scale: &Sc
 mod tests {
     use super::*;
 
+    struct MockScale(u8);
+    impl Scale for MockScale {
+        fn steps(&self) -> Vec<crate::music::Step> {
+            todo!()
+        }
+
+        fn size(&self) -> u8 {
+            self.0
+        }
+
+        fn root(&self) -> &crate::music::Note {
+            todo!()
+        }
+    }
+
     #[test]
     fn test_multiple_points_on_normal_sized_scale() {
-        let s = Scale(8);
+        let s = MockScale(8);
         let c = Vec2::ZERO;
         // 0°
         assert_eq!(
@@ -91,43 +98,43 @@ mod tests {
 
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(1))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(1))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(2))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(2))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(3))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(3))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(4))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(4))
         );
         assert_eq!(
             2u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(5))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(5))
         );
         assert_eq!(
             2u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(6))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(6))
         );
         assert_eq!(
             2u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(7))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(7))
         );
         assert_eq!(
             2u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(8))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(8))
         );
         assert_eq!(
             3u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(9))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(9))
         );
         assert_eq!(
             3u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(10))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(10))
         );
     }
     #[test]
@@ -138,43 +145,43 @@ mod tests {
 
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(1))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(1))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(2))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(2))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(3))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(3))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(4))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(4))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(5))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(5))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(6))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(6))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(7))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(7))
         );
         assert_eq!(
             1u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(8))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(8))
         );
         assert_eq!(
             2u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(9))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(9))
         );
         assert_eq!(
             2u8,
-            calculate_scale_position_by_angle(&center, &point, &Scale(10))
+            calculate_scale_position_by_angle(&center, &point, &MockScale(10))
         );
     }
 }

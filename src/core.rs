@@ -1,3 +1,4 @@
+use crate::music::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::color::palettes::css::FUCHSIA;
 use bevy::ecs::relationship::RelationshipSourceCollection;
@@ -13,7 +14,7 @@ impl Plugin for CoreGamePlugin {
             .add_systems(
                 Update,
                 (
-                    check_and_play_notes,
+                    check_and_play_notes::<NaturalMinorScale>,
                     draw_triggers,
                     handle_note_played,
                     check_all_played,
@@ -27,14 +28,12 @@ impl Plugin for CoreGamePlugin {
 }
 
 #[derive(Resource)]
-pub struct LevelConfig {
+pub struct LevelConfig<T>
+where
+    T: Scale + Sync,
+{
     pub grow_factor: f32,
-}
-
-impl Default for LevelConfig {
-    fn default() -> Self {
-        LevelConfig { grow_factor: 10.0 }
-    }
+    pub scale: T,
 }
 
 #[derive(Resource)]
@@ -108,14 +107,16 @@ fn exit_execution(mut triggers: Query<(Entity, &mut Trigger)>, mut commands: Com
 }
 
 /// The core game logic: check if as trigger hits a note.
-fn check_and_play_notes(
+fn check_and_play_notes<T>(
     triggers: Query<(Entity, &mut Trigger, &Transform)>,
     unplayed_notes: Query<&UnplayedNotes>,
     notes: Query<(&Note, &Transform)>,
-    config: Res<LevelConfig>,
+    config: Res<LevelConfig<T>>,
     time: Res<Time>,
     mut play_note_events: EventWriter<NotePlayedEvent>,
-) {
+) where
+    T: Scale + Send + Sync + 'static,
+{
     for (entity, mut trigger, trigger_position) in triggers {
         trigger.size += time.delta().as_secs_f32() * config.grow_factor;
 
