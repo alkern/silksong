@@ -7,7 +7,7 @@ pub enum Step {
     Whole,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[allow(dead_code)]
 pub enum Note {
     A,
@@ -61,7 +61,7 @@ impl Note {
 
 pub trait Scale: Send + Sync + 'static {
     fn size(&self) -> u8 {
-        self.steps().len() as u8
+        self.steps().len() as u8 + 1
     }
     fn steps(&self) -> Vec<Step>;
 
@@ -92,10 +92,36 @@ impl NaturalMinorScale {
 
 impl Scale for NaturalMinorScale {
     fn steps(&self) -> Vec<Step> {
-        vec![Whole, Half, Whole, Whole, Half, Whole, Whole]
+        // last step does not go to root again!
+        vec![Whole, Half, Whole, Whole, Half, Whole]
     }
 
     fn root(&self) -> &Note {
         &self.root
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let scale = NaturalMinorScale::new(A);
+        assert_eq!(A, scale.get(0));
+        assert_eq!(B, scale.get(1));
+        assert_eq!(C, scale.get(2));
+        assert_eq!(D, scale.get(3));
+        assert_eq!(E, scale.get(4));
+        assert_eq!(F, scale.get(5));
+        assert_eq!(G, scale.get(6));
+        assert_eq!(A, scale.get(7));
+        assert_eq!(B, scale.get(8));
+        assert_eq!(C, scale.get(9));
+        assert_eq!(D, scale.get(10));
+        assert_eq!(E, scale.get(11));
+        assert_eq!(F, scale.get(12));
+        assert_eq!(G, scale.get(13));
+        assert_eq!(A, scale.get(14));
     }
 }
