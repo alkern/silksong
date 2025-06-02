@@ -10,6 +10,7 @@ use crate::music::model::NaturalMinorScale;
 use crate::state::GameState;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Origin, Svg2d};
+use std::f32::consts::PI;
 
 pub struct CreativeModePlugin;
 
@@ -60,36 +61,41 @@ fn setup_config(mut commands: Commands) {
 }
 
 fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
-    fn build_note(x: f32, y: f32, core_assets: &Res<CoreAssets>) -> impl Bundle {
+    fn build_note(position: Vec2, core_assets: &Res<CoreAssets>) -> impl Bundle {
         (
             Name::new("Note"),
             Note,
-            Transform::from_xyz(x, y, 0.0).with_scale(Vec3::splat(0.025)),
+            Transform::from_translation(position.extend(0.0)).with_scale(Vec3::splat(0.025)),
             Svg2d(core_assets.note_icon.clone()),
             Origin::Center,
         )
     }
 
-    commands.spawn(build_note(0.0, 500.0, &core_assets));
-    commands.spawn(build_note(101.0, 401.0, &core_assets));
-    commands.spawn(build_note(202.0, 302.0, &core_assets));
-    commands.spawn(build_note(303.0, 203.0, &core_assets));
-    commands.spawn(build_note(404.0, 104.0, &core_assets));
-    commands.spawn(build_note(505.0, 0.0, &core_assets));
-    commands.spawn(build_note(406.0, -105.0, &core_assets));
-    commands.spawn(build_note(307.0, -206.0, &core_assets));
-    commands.spawn(build_note(208.0, -307.0, &core_assets));
-    commands.spawn(build_note(109.0, -408.0, &core_assets));
-    commands.spawn(build_note(0.0, -509.0, &core_assets));
-    commands.spawn(build_note(-110.0, -410.0, &core_assets));
-    commands.spawn(build_note(-211.0, -311.0, &core_assets));
-    commands.spawn(build_note(-312.0, -212.0, &core_assets));
-    commands.spawn(build_note(-413.0, -113.0, &core_assets));
-    commands.spawn(build_note(-514.0, 0.0, &core_assets));
-    commands.spawn(build_note(-415.0, 114.0, &core_assets));
-    commands.spawn(build_note(-316.0, 215.0, &core_assets));
-    commands.spawn(build_note(-217.0, 316.0, &core_assets));
-    commands.spawn(build_note(-118.0, 417.0, &core_assets));
+    commands.spawn(build_note(Vec2::from_angle(0.0) * 50.0, &core_assets));
+    commands.spawn(build_note(
+        Vec2::from_angle(1. / 3. * PI) * 100.0,
+        &core_assets,
+    ));
+    commands.spawn(build_note(
+        Vec2::from_angle(2. / 3. * PI) * 150.0,
+        &core_assets,
+    ));
+    commands.spawn(build_note(
+        Vec2::from_angle(3. / 3. * PI) * 200.0,
+        &core_assets,
+    ));
+    commands.spawn(build_note(
+        Vec2::from_angle(4. / 3. * PI) * 250.0,
+        &core_assets,
+    ));
+    commands.spawn(build_note(
+        Vec2::from_angle(5. / 3. * PI) * 300.0,
+        &core_assets,
+    ));
+    commands.spawn(build_note(
+        Vec2::from_angle(6. / 3. * PI) * 350.0,
+        &core_assets,
+    ));
 
     commands.spawn((
         Name::new("Trigger"),

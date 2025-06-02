@@ -177,14 +177,15 @@ fn handle_note_played(
 /// After all notes are played the execution is done.
 fn check_all_played(
     notes: Query<&UnplayedNotes>,
-    // mut _: ResMut<NextState<GameState>>
+    // mut next_state: ResMut<NextState<GameState>>
 ) {
     for note in notes.iter() {
         if !note.0.is_empty() {
             return;
         }
     }
-    //TODO when all is played return to another state after a short while
+    //TODO stop execution
+
     // next_state.set(GameState::Over);
 }
 

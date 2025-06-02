@@ -1,6 +1,7 @@
 use crate::core::game::{LevelConfig, NotePlayedEvent};
 use crate::core::model::{Note, Trigger};
 use crate::math::calculate_scale_position_by_angle;
+use crate::music::audio::PianoAudioAssets;
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::prelude::*;
@@ -21,6 +22,8 @@ fn handle_note_played<T>(
     triggers: Query<(&Trigger, &Transform)>,
     notes: Query<(&Note, &Transform)>,
     level: Res<LevelConfig<T>>,
+    piano: Res<PianoAudioAssets>,
+    mut commands: Commands,
 ) where
     T: Scale,
 {
@@ -32,6 +35,7 @@ fn handle_note_played<T>(
             continue;
         };
 
+        // calculate the note from angle
         let index = calculate_scale_position_by_angle(
             &trigger.translation.xy(),
             &note.translation.xy(),
@@ -39,6 +43,11 @@ fn handle_note_played<T>(
         );
         let played = level.scale.get(index);
 
-        info!("playing note {:?}", played);
+        // play note
+        commands.spawn((
+            Name::new("Note"),
+            AudioPlayer(piano.play(played)),
+            PlaybackSettings::DESPAWN,
+        ));
     }
 }
