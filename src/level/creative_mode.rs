@@ -5,7 +5,7 @@
 //! possible in the time.
 
 use crate::core::{CoreAssets, LevelConfig, Note, Trigger};
-use crate::music::NaturalMinorScale;
+use crate::music::model::NaturalMinorScale;
 use crate::state::GameState;
 use bevy::prelude::*;
 
@@ -53,18 +53,41 @@ impl ComputedStates for CreativeModeState {
 fn setup_config(mut commands: Commands) {
     commands.insert_resource(LevelConfig {
         grow_factor: 100.0,
-        scale: NaturalMinorScale::new(crate::music::Note::A),
+        scale: NaturalMinorScale::new(crate::music::model::Note::A),
     });
 }
 
 fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
-    commands.spawn((
-        Name::new("First Demo Note"),
-        Note,
-        Transform::from_xyz(50.0, 50.0, 0.0),
-        Mesh2d::from(core_assets.note_form.clone()),
-        MeshMaterial2d(core_assets.note_material.clone()),
-    ));
+    fn build_note(x: f32, y: f32, core_assets: &Res<CoreAssets>) -> impl Bundle {
+        (
+            Name::new("Note"),
+            Note,
+            Transform::from_xyz(x, y, 0.0),
+            Mesh2d::from(core_assets.note_form.clone()),
+            MeshMaterial2d(core_assets.note_material.clone()),
+        )
+    }
+
+    commands.spawn(build_note(0.0, 500.0, &core_assets));
+    commands.spawn(build_note(100.0, 400.0, &core_assets));
+    commands.spawn(build_note(200.0, 300.0, &core_assets));
+    commands.spawn(build_note(300.0, 400.0, &core_assets));
+    commands.spawn(build_note(400.0, 100.0, &core_assets));
+    commands.spawn(build_note(500.0, 0.0, &core_assets));
+    commands.spawn(build_note(400.0, -100.0, &core_assets));
+    commands.spawn(build_note(300.0, -200.0, &core_assets));
+    commands.spawn(build_note(200.0, -300.0, &core_assets));
+    commands.spawn(build_note(100.0, -400.0, &core_assets));
+    commands.spawn(build_note(0.0, -500.0, &core_assets));
+    commands.spawn(build_note(-100.0, -400.0, &core_assets));
+    commands.spawn(build_note(-200.0, -300.0, &core_assets));
+    commands.spawn(build_note(-300.0, -200.0, &core_assets));
+    commands.spawn(build_note(-400.0, -100.0, &core_assets));
+    commands.spawn(build_note(-500.0, 0.0, &core_assets));
+    commands.spawn(build_note(-400.0, 100.0, &core_assets));
+    commands.spawn(build_note(-300.0, 200.0, &core_assets));
+    commands.spawn(build_note(-200.0, 300.0, &core_assets));
+    commands.spawn(build_note(-100.0, 400.0, &core_assets));
 
     commands.spawn((
         Name::new("First Demo Player"),

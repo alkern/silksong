@@ -1,16 +1,17 @@
 mod core;
 mod level;
 mod math;
+mod music;
 mod state;
 mod visuals;
-mod music;
 
 use crate::core::CoreGamePlugin;
 use crate::level::creative_mode::CreativeModePlugin;
+use crate::music::game::MusicPlugin;
 use crate::state::GameStatePlugin;
+use crate::visuals::VisualsPlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
-use crate::visuals::VisualsPlugin;
 
 fn main() {
     App::new()
@@ -22,8 +23,9 @@ fn main() {
             ..default()
         }))
         // game plugins
-        .add_plugins(GameStatePlugin)
         .add_plugins(CoreGamePlugin)
+        .add_plugins(GameStatePlugin)
+        .add_plugins(MusicPlugin)
         .add_plugins(VisualsPlugin)
         // level plugins
         .add_plugins(CreativeModePlugin)

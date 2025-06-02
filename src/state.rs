@@ -14,6 +14,7 @@ pub enum AppState {
 /// In-game state
 #[derive(SubStates, Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[source(AppState=AppState::Game)]
+#[allow(dead_code)]
 pub enum GameState {
     /// Set up resources and assets
     #[default]

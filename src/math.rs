@@ -1,4 +1,4 @@
-use crate::music::Scale;
+use crate::music::model::Scale;
 use bevy::prelude::*;
 use std::f32::consts::PI;
 
@@ -26,7 +26,7 @@ mod tests {
 
     struct MockScale(u8);
     impl Scale for MockScale {
-        fn steps(&self) -> Vec<crate::music::Step> {
+        fn steps(&self) -> Vec<crate::music::model::Step> {
             todo!()
         }
 
@@ -34,7 +34,7 @@ mod tests {
             self.0
         }
 
-        fn root(&self) -> &crate::music::Note {
+        fn root(&self) -> &crate::music::model::Note {
             todo!()
         }
     }

@@ -1,4 +1,4 @@
-use crate::music::{NaturalMinorScale, Scale};
+use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::color::palettes::css::FUCHSIA;
 use bevy::ecs::relationship::RelationshipSourceCollection;
@@ -75,9 +75,9 @@ pub struct Trigger {
 struct UnplayedNotes(Vec<Entity>);
 
 #[derive(Event, Debug)]
-struct NotePlayedEvent {
-    note: Entity,
-    trigger: Entity,
+pub struct NotePlayedEvent {
+    pub note: Entity,
+    pub trigger: Entity,
 }
 
 fn enter_execution(
@@ -185,11 +185,15 @@ fn handle_note_played(
     }
 }
 
-fn check_all_played(notes: Query<&UnplayedNotes>, mut next_state: ResMut<NextState<GameState>>) {
+fn check_all_played(
+    notes: Query<&UnplayedNotes>,
+    // mut _: ResMut<NextState<GameState>>
+) {
     for note in notes.iter() {
         if !note.0.is_empty() {
             return;
         }
     }
-    next_state.set(GameState::Over);
+    //TODO when all is played return to another state after a short while
+    // next_state.set(GameState::Over);
 }

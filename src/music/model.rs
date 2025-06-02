@@ -1,4 +1,4 @@
-use crate::music::Step::{Half, Whole};
+use crate::music::model::Step::{Half, Whole};
 use Note::*;
 
 #[derive(Clone, Copy, Debug)]
