@@ -168,8 +168,8 @@ fn handle_note_played(
 
         let mut notes_to_keep = Vec::new();
         for note in &notes.0 {
-            if !notes_to_remove.contains(&note) {
-                notes_to_keep.push(note.clone());
+            if !notes_to_remove.contains(note) {
+                notes_to_keep.push(*note);
             }
         }
 

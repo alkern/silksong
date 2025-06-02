@@ -64,7 +64,7 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
             Name::new("Note"),
             Note,
             Transform::from_xyz(x, y, 0.0),
-            Mesh2d::from(core_assets.note_form.clone()),
+            core_assets.note_form.clone(),
             MeshMaterial2d(core_assets.note_material.clone()),
         )
     }
@@ -94,7 +94,7 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
         Name::new("First Demo Player"),
         Trigger::default(),
         Transform::default(),
-        Mesh2d::from(core_assets.trigger_form.clone()),
+        core_assets.trigger_form.clone(),
         MeshMaterial2d(core_assets.trigger_material.clone()),
     ));
 

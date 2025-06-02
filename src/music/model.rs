@@ -67,7 +67,7 @@ pub trait Scale: Send + Sync + 'static {
 
     fn get(&self, index: u8) -> Note {
         let index = index % self.size();
-        let mut result = self.root().clone();
+        let mut result = *self.root();
 
         let steps = &self.steps()[0..index as usize];
 
