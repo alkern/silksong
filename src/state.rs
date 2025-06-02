@@ -29,12 +29,35 @@ pub enum GameState {
     Over,
 }
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MinimalGameState {
+    #[default]
+    Setup,
+    Running,
+}
+
+impl ComputedStates for MinimalGameState {
+    type SourceStates = GameState;
+
+    fn compute(sources: Self::SourceStates) -> Option<Self> {
+        match sources {
+            GameState::SetupResources => MinimalGameState::Setup,
+            GameState::SetupGameObjects => MinimalGameState::Setup,
+            GameState::Build => MinimalGameState::Running,
+            GameState::Execute => MinimalGameState::Running,
+            GameState::Over => MinimalGameState::Running,
+        }
+        .into()
+    }
+}
+
 pub struct GameStatePlugin;
 
 impl Plugin for GameStatePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<AppState>()
             .add_sub_state::<GameState>()
+            .add_computed_state::<MinimalGameState>()
             .add_systems(
                 PostUpdate,
                 (

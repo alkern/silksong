@@ -5,13 +5,14 @@ mod music;
 mod state;
 mod visuals;
 
+use crate::core::game::CoreGamePlugin;
 use crate::level::creative_mode::CreativeModePlugin;
+use crate::music::audio::AudioPlugin;
 use crate::music::game::MusicPlugin;
 use crate::state::GameStatePlugin;
 use crate::visuals::VisualsPlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
-use core::game::CoreGamePlugin;
 
 fn main() {
     App::new()
@@ -26,6 +27,7 @@ fn main() {
         // external plugins
         .add_plugins(bevy_svg::prelude::SvgPlugin)
         // game plugins
+        .add_plugins(AudioPlugin)
         .add_plugins(CoreGamePlugin)
         .add_plugins(GameStatePlugin)
         .add_plugins(MusicPlugin)
