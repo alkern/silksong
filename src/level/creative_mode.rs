@@ -1,43 +1,49 @@
+//! # Creative Mode
+//!
+//! Free Mode in which every element can be placed and playing is possible at all times.
+//! This is the goal for the game jam, a tutorial and puzzle mode would be even cooler, but not 
+//! possible in the time.
+
 use crate::core::{CoreAssets, LevelConfig, Note, Trigger};
 use crate::state::GameState;
 use bevy::prelude::*;
 
-pub struct DemoPlugin;
+pub struct CreativeModePlugin;
 
-impl Plugin for DemoPlugin {
+impl Plugin for CreativeModePlugin {
     fn build(&self, app: &mut App) {
         app
             // set up level
-            .add_computed_state::<DemoLevelState>()
+            .add_computed_state::<CreativeModeState>()
             .add_systems(
                 OnEnter(GameState::SetupResources),
-                setup_config.run_if(in_state(DemoLevelState::Setup)),
+                setup_config.run_if(in_state(CreativeModeState::Setup)),
             )
             .add_systems(
                 OnEnter(GameState::SetupGameObjects),
-                setup_entities.run_if(in_state(DemoLevelState::Setup)),
+                setup_entities.run_if(in_state(CreativeModeState::Setup)),
             );
     }
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DemoLevelState {
+pub enum CreativeModeState {
     Off,
     #[default]
     Setup,
     On,
 }
 
-impl ComputedStates for DemoLevelState {
+impl ComputedStates for CreativeModeState {
     type SourceStates = GameState;
 
     fn compute(sources: Self::SourceStates) -> Option<Self> {
         match sources {
-            GameState::SetupResources => DemoLevelState::Setup,
-            GameState::SetupGameObjects => DemoLevelState::Setup,
-            GameState::Build => DemoLevelState::On,
-            GameState::Execute => DemoLevelState::On,
-            GameState::Over => DemoLevelState::Off,
+            GameState::SetupResources => CreativeModeState::Setup,
+            GameState::SetupGameObjects => CreativeModeState::Setup,
+            GameState::Build => CreativeModeState::On,
+            GameState::Execute => CreativeModeState::On,
+            GameState::Over => CreativeModeState::Off,
         }
         .into()
     }

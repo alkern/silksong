@@ -5,7 +5,7 @@ mod state;
 mod visuals;
 
 use crate::core::CoreGamePlugin;
-use crate::level::demo::DemoPlugin;
+use crate::level::creative_mode::CreativeModePlugin;
 use crate::state::GameStatePlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
@@ -25,7 +25,7 @@ fn main() {
         .add_plugins(CoreGamePlugin)
         .add_plugins(VisualsPlugin)
         // level plugins
-        .add_plugins(DemoPlugin)
+        .add_plugins(CreativeModePlugin)
         // camera
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
