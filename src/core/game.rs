@@ -5,6 +5,7 @@ use bevy::color::palettes::css::FUCHSIA;
 use bevy::ecs::relationship::RelationshipSourceCollection;
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
+use bevy_svg::prelude::{Svg, Svg2d};
 
 pub struct CoreGamePlugin;
 
@@ -23,8 +24,14 @@ impl Plugin for CoreGamePlugin {
                     .run_if(in_state(GameState::Execute))
                     .chain(),
             )
-            .add_systems(OnEnter(GameState::Execute), enter_execution)
-            .add_systems(OnExit(GameState::Execute), exit_execution);
+            .add_systems(
+                OnEnter(GameState::Execute),
+                (enter_execution, update_trigger_icon_to_pause),
+            )
+            .add_systems(
+                OnExit(GameState::Execute),
+                (exit_execution, update_trigger_icon_to_play),
+            );
     }
 }
 
@@ -39,27 +46,17 @@ where
 
 #[derive(Resource)]
 pub struct CoreAssets {
-    // TODO material active/inactive
-    pub note_material: Handle<ColorMaterial>,
-    pub note_form: Mesh2d,
-    // TODO trigger icon
-    pub trigger_material: Handle<ColorMaterial>,
-    pub trigger_form: Mesh2d,
+    pub note_icon: Handle<Svg>,
+    pub trigger_icon_pause: Handle<Svg>,
+    pub trigger_icon_play: Handle<Svg>,
 }
 
 impl FromWorld for CoreAssets {
     fn from_world(world: &mut World) -> Self {
         CoreAssets {
-            note_material: world.add_asset(ColorMaterial {
-                color: Color::srgb(0.0, 0.1, 0.05),
-                ..default()
-            }),
-            note_form: world.add_asset(Circle::new(10.0)).into(),
-            trigger_material: world.add_asset(ColorMaterial {
-                color: Color::srgb(0.6, 0.0, 0.0),
-                ..default()
-            }),
-            trigger_form: world.add_asset(Circle::new(10.0)).into(),
+            note_icon: world.load_asset("icons/music-solid.svg"),
+            trigger_icon_pause: world.load_asset("icons/circle-pause-regular.svg"),
+            trigger_icon_play: world.load_asset("icons/circle-play-regular.svg"),
         }
     }
 }
@@ -189,4 +186,30 @@ fn check_all_played(
     }
     //TODO when all is played return to another state after a short while
     // next_state.set(GameState::Over);
+}
+
+fn update_trigger_icon_to_play(
+    assets: Res<CoreAssets>,
+    trigger: Query<(Entity, &Trigger)>,
+    commands: Commands,
+) {
+    update_icon(assets.trigger_icon_play.clone(), trigger, commands);
+}
+
+fn update_trigger_icon_to_pause(
+    assets: Res<CoreAssets>,
+    trigger: Query<(Entity, &Trigger)>,
+    commands: Commands,
+) {
+    update_icon(assets.trigger_icon_pause.clone(), trigger, commands);
+}
+
+fn update_icon(asset: Handle<Svg>, trigger: Query<(Entity, &Trigger)>, mut commands: Commands) {
+    let Ok((trigger, _)) = trigger.single() else {
+        return;
+    };
+    let Ok(mut trigger) = commands.get_entity(trigger) else {
+        return;
+    };
+    trigger.insert(Svg2d(asset));
 }

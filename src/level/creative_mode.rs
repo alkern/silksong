@@ -9,6 +9,7 @@ use crate::core::model::{Note, Trigger};
 use crate::music::model::NaturalMinorScale;
 use crate::state::GameState;
 use bevy::prelude::*;
+use bevy_svg::prelude::{Origin, Svg2d};
 
 pub struct CreativeModePlugin;
 
@@ -63,16 +64,16 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
         (
             Name::new("Note"),
             Note,
-            Transform::from_xyz(x, y, 0.0),
-            core_assets.note_form.clone(),
-            MeshMaterial2d(core_assets.note_material.clone()),
+            Transform::from_xyz(x, y, 0.0).with_scale(Vec3::splat(0.025)),
+            Svg2d(core_assets.note_icon.clone()),
+            Origin::Center,
         )
     }
 
     commands.spawn(build_note(0.0, 500.0, &core_assets));
     commands.spawn(build_note(101.0, 401.0, &core_assets));
     commands.spawn(build_note(202.0, 302.0, &core_assets));
-    commands.spawn(build_note(303.0, 403.0, &core_assets));
+    commands.spawn(build_note(303.0, 203.0, &core_assets));
     commands.spawn(build_note(404.0, 104.0, &core_assets));
     commands.spawn(build_note(505.0, 0.0, &core_assets));
     commands.spawn(build_note(406.0, -105.0, &core_assets));
@@ -91,11 +92,11 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
     commands.spawn(build_note(-118.0, 417.0, &core_assets));
 
     commands.spawn((
-        Name::new("First Demo Player"),
+        Name::new("Trigger"),
         Trigger::default(),
-        Transform::default(),
-        core_assets.trigger_form.clone(),
-        MeshMaterial2d(core_assets.trigger_material.clone()),
+        Transform::default().with_scale(Vec3::splat(0.05)),
+        Svg2d(core_assets.trigger_icon_play.clone()),
+        Origin::Center,
     ));
 
     info!("demo entities setup")

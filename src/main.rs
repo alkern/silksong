@@ -15,6 +15,7 @@ use core::game::CoreGamePlugin;
 
 fn main() {
     App::new()
+        // Bevy plugins
         .add_plugins(DefaultPlugins.set(AssetPlugin {
             // Wasm builds will check for meta files (that don't exist) if this isn't set.
             // This causes errors and even panics in web builds on itch.
@@ -22,6 +23,8 @@ fn main() {
             meta_check: AssetMetaCheck::Never,
             ..default()
         }))
+        // external plugins
+        .add_plugins(bevy_svg::prelude::SvgPlugin)
         // game plugins
         .add_plugins(CoreGamePlugin)
         .add_plugins(GameStatePlugin)
