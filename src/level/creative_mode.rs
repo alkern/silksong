@@ -71,31 +71,15 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
         )
     }
 
-    commands.spawn(build_note(Vec2::from_angle(0.0) * 50.0, &core_assets));
-    commands.spawn(build_note(
-        Vec2::from_angle(1. / 3. * PI) * 100.0,
-        &core_assets,
-    ));
-    commands.spawn(build_note(
-        Vec2::from_angle(2. / 3. * PI) * 150.0,
-        &core_assets,
-    ));
-    commands.spawn(build_note(
-        Vec2::from_angle(3. / 3. * PI) * 200.0,
-        &core_assets,
-    ));
-    commands.spawn(build_note(
-        Vec2::from_angle(4. / 3. * PI) * 250.0,
-        &core_assets,
-    ));
-    commands.spawn(build_note(
-        Vec2::from_angle(5. / 3. * PI) * 300.0,
-        &core_assets,
-    ));
-    commands.spawn(build_note(
-        Vec2::from_angle(6. / 3. * PI) * 350.0,
-        &core_assets,
-    ));
+    let max = 15;
+    for i in 0..=max {
+        let i = i as f32;
+        let max = max as f32;
+        commands.spawn(build_note(
+            Vec2::from_angle((2.0 * i / max) * PI) * (30.0 * (i + 1.0)),
+            &core_assets,
+        ));
+    }
 
     commands.spawn((
         Name::new("Trigger"),

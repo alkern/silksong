@@ -1,7 +1,7 @@
 use crate::core::model::{Note, Trigger, UnplayedNotes};
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
-use bevy::color::palettes::css::FUCHSIA;
+use bevy::color::palettes::css::BLUE_VIOLET;
 use bevy::ecs::relationship::RelationshipSourceCollection;
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
@@ -136,7 +136,9 @@ fn check_and_play_notes<T>(
 /// Visualize the size of each trigger.
 fn draw_triggers(mut gizmos: Gizmos, triggers: Query<&Trigger>) {
     for trigger in &triggers {
-        gizmos.circle_2d(Isometry2d::IDENTITY, trigger.size, FUCHSIA);
+        gizmos
+            .circle_2d(Isometry2d::IDENTITY, trigger.size, BLUE_VIOLET)
+            .resolution(64);
     }
 }
 
