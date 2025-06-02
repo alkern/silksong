@@ -69,25 +69,25 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
     }
 
     commands.spawn(build_note(0.0, 500.0, &core_assets));
-    commands.spawn(build_note(100.0, 400.0, &core_assets));
-    commands.spawn(build_note(200.0, 300.0, &core_assets));
-    commands.spawn(build_note(300.0, 400.0, &core_assets));
-    commands.spawn(build_note(400.0, 100.0, &core_assets));
-    commands.spawn(build_note(500.0, 0.0, &core_assets));
-    commands.spawn(build_note(400.0, -100.0, &core_assets));
-    commands.spawn(build_note(300.0, -200.0, &core_assets));
-    commands.spawn(build_note(200.0, -300.0, &core_assets));
-    commands.spawn(build_note(100.0, -400.0, &core_assets));
-    commands.spawn(build_note(0.0, -500.0, &core_assets));
-    commands.spawn(build_note(-100.0, -400.0, &core_assets));
-    commands.spawn(build_note(-200.0, -300.0, &core_assets));
-    commands.spawn(build_note(-300.0, -200.0, &core_assets));
-    commands.spawn(build_note(-400.0, -100.0, &core_assets));
-    commands.spawn(build_note(-500.0, 0.0, &core_assets));
-    commands.spawn(build_note(-400.0, 100.0, &core_assets));
-    commands.spawn(build_note(-300.0, 200.0, &core_assets));
-    commands.spawn(build_note(-200.0, 300.0, &core_assets));
-    commands.spawn(build_note(-100.0, 400.0, &core_assets));
+    commands.spawn(build_note(101.0, 401.0, &core_assets));
+    commands.spawn(build_note(202.0, 302.0, &core_assets));
+    commands.spawn(build_note(303.0, 403.0, &core_assets));
+    commands.spawn(build_note(404.0, 104.0, &core_assets));
+    commands.spawn(build_note(505.0, 0.0, &core_assets));
+    commands.spawn(build_note(406.0, -105.0, &core_assets));
+    commands.spawn(build_note(307.0, -206.0, &core_assets));
+    commands.spawn(build_note(208.0, -307.0, &core_assets));
+    commands.spawn(build_note(109.0, -408.0, &core_assets));
+    commands.spawn(build_note(0.0, -509.0, &core_assets));
+    commands.spawn(build_note(-110.0, -410.0, &core_assets));
+    commands.spawn(build_note(-211.0, -311.0, &core_assets));
+    commands.spawn(build_note(-312.0, -212.0, &core_assets));
+    commands.spawn(build_note(-413.0, -113.0, &core_assets));
+    commands.spawn(build_note(-514.0, 0.0, &core_assets));
+    commands.spawn(build_note(-415.0, 114.0, &core_assets));
+    commands.spawn(build_note(-316.0, 215.0, &core_assets));
+    commands.spawn(build_note(-217.0, 316.0, &core_assets));
+    commands.spawn(build_note(-118.0, 417.0, &core_assets));
 
     commands.spawn((
         Name::new("First Demo Player"),

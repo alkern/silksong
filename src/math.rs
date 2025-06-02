@@ -4,20 +4,23 @@ use std::f32::consts::PI;
 
 pub fn calculate_scale_position_by_angle(center: &Vec2, point: &Vec2, scale: &impl Scale) -> u8 {
     let direction = point - center;
-    let (angle_x, angle_y) = match direction.try_normalize() {
-        None => (0.0, 0.0),
-        Some(direction) => (direction.x.acos(), direction.y.asin()),
+    let (x, y) = match direction.try_normalize() {
+        None => {
+            return 0;
+        }
+        Some(direction) => (direction.x, direction.y),
     };
+    let angle_x = x.acos();
 
     let part = (PI * 2.0) / scale.size() as f32;
 
+    let angle = match y {
+        y if y >= 0.0 => angle_x,
+        _ => 2.0 * PI - angle_x,
+    };
+
     //TODO refactor
-    let index = (angle_x / part).ceil() as u8;
-    if angle_y >= 0.0 {
-        index
-    } else {
-        scale.size() - ((scale.size() / 2) - index)
-    }
+    (angle / part).ceil() as u8
 }
 
 #[cfg(test)]
@@ -83,10 +86,25 @@ mod tests {
             4,
             calculate_scale_position_by_angle(&c, &Vec2::new(-0.7660444, 0.6427876), &s)
         );
+        // 180°
+        assert_eq!(
+            4,
+            calculate_scale_position_by_angle(&c, &Vec2::new(-1.0, 0.0), &s)
+        );
+        // >180°
+        assert_eq!(
+            5,
+            calculate_scale_position_by_angle(&c, &Vec2::new(-1.0, -0.005), &s)
+        );
         // 270°
         assert_eq!(
             6,
             calculate_scale_position_by_angle(&c, &Vec2::new(0.0, -1.0), &s)
+        );
+        // >270°
+        assert_eq!(
+            8,
+            calculate_scale_position_by_angle(&c, &Vec2::new(0.9, -0.01), &s)
         );
     }
 

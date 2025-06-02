@@ -157,8 +157,6 @@ fn handle_note_played(
     // TODO refactor this whole thing
     let mut to_remove: HashMap<Entity, Vec<Entity>> = HashMap::new();
     for event in note_played_events.read() {
-        info!("note {:?} played <3", event);
-
         match to_remove.get_mut(&event.trigger) {
             None => {
                 to_remove.insert(event.trigger, vec![event.note]);
