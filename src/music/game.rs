@@ -1,4 +1,5 @@
-use crate::core::{LevelConfig, Note, NotePlayedEvent, Trigger};
+use crate::core::game::{LevelConfig, NotePlayedEvent};
+use crate::core::model::{Note, Trigger};
 use crate::math::calculate_scale_position_by_angle;
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;

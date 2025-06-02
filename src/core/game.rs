@@ -1,3 +1,4 @@
+use crate::core::model::{Note, Trigger, UnplayedNotes};
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::color::palettes::css::FUCHSIA;
@@ -63,23 +64,13 @@ impl FromWorld for CoreAssets {
     }
 }
 
-#[derive(Component)]
-pub struct Note;
-
-#[derive(Component, Default, Debug)]
-pub struct Trigger {
-    size: f32,
-}
-
-#[derive(Component, Deref)]
-struct UnplayedNotes(Vec<Entity>);
-
 #[derive(Event, Debug)]
 pub struct NotePlayedEvent {
     pub note: Entity,
     pub trigger: Entity,
 }
 
+/// Set the model data up for one execution. We keep some data in memory to simplify calculations.
 fn enter_execution(
     triggers: Query<(Entity, &Trigger)>,
     notes: Query<(Entity, &Note)>,
@@ -95,6 +86,7 @@ fn enter_execution(
     }
 }
 
+/// Clear the game state after an execution.
 fn exit_execution(mut triggers: Query<(Entity, &mut Trigger)>, mut commands: Commands) {
     for (entity, mut trigger) in &mut triggers {
         trigger.size = 0.0;
@@ -144,12 +136,14 @@ fn check_and_play_notes<T>(
     }
 }
 
+/// Visualize the size of each trigger.
 fn draw_triggers(mut gizmos: Gizmos, triggers: Query<&Trigger>) {
     for trigger in &triggers {
         gizmos.circle_2d(Isometry2d::IDENTITY, trigger.size, FUCHSIA);
     }
 }
 
+/// If a trigger hits a note, this note is played and removed from the triggers list of unplayed notes.
 fn handle_note_played(
     mut note_played_events: EventReader<NotePlayedEvent>,
     mut notes: Query<&mut UnplayedNotes>,
@@ -183,6 +177,7 @@ fn handle_note_played(
     }
 }
 
+/// After all notes are played the execution is done.
 fn check_all_played(
     notes: Query<&UnplayedNotes>,
     // mut _: ResMut<NextState<GameState>>

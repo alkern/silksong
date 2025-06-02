@@ -4,7 +4,8 @@
 //! This is the goal for the game jam, a tutorial and puzzle mode would be even cooler, but not
 //! possible in the time.
 
-use crate::core::{CoreAssets, LevelConfig, Note, Trigger};
+use crate::core::game::{CoreAssets, LevelConfig};
+use crate::core::model::{Note, Trigger};
 use crate::music::model::NaturalMinorScale;
 use crate::state::GameState;
 use bevy::prelude::*;
