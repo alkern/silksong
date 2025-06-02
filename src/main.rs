@@ -2,12 +2,14 @@ mod core;
 mod level;
 mod math;
 mod state;
+mod visuals;
 
 use crate::core::CoreGamePlugin;
 use crate::level::demo::DemoPlugin;
 use crate::state::GameStatePlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
+use crate::visuals::VisualsPlugin;
 
 fn main() {
     App::new()
@@ -21,6 +23,7 @@ fn main() {
         // game plugins
         .add_plugins(GameStatePlugin)
         .add_plugins(CoreGamePlugin)
+        .add_plugins(VisualsPlugin)
         // level plugins
         .add_plugins(DemoPlugin)
         // camera
