@@ -29,16 +29,16 @@ mod tests {
 
     struct MockScale(u8);
     impl Scale for MockScale {
-        fn steps(&self) -> Vec<crate::music::model::Step> {
-            todo!()
-        }
-
         fn size(&self) -> u8 {
             self.0
         }
 
+        fn steps(&self) -> Vec<crate::music::model::Step> {
+            unimplemented!()
+        }
+
         fn root(&self) -> &crate::music::model::Note {
-            todo!()
+            unimplemented!()
         }
     }
 
