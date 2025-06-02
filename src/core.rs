@@ -30,7 +30,7 @@ impl Plugin for CoreGamePlugin {
 #[derive(Resource)]
 pub struct LevelConfig<T>
 where
-    T: Scale + Sync,
+    T: Scale,
 {
     pub grow_factor: f32,
     pub scale: T,
@@ -115,7 +115,7 @@ fn check_and_play_notes<T>(
     time: Res<Time>,
     mut play_note_events: EventWriter<NotePlayedEvent>,
 ) where
-    T: Scale + Send + Sync + 'static,
+    T: Scale,
 {
     for (entity, mut trigger, trigger_position) in triggers {
         trigger.size += time.delta().as_secs_f32() * config.grow_factor;

@@ -21,7 +21,7 @@ fn handle_note_played<T>(
     notes: Query<(&Note, &Transform)>,
     level: Res<LevelConfig<T>>,
 ) where
-    T: Scale + Send + Sync + 'static,
+    T: Scale,
 {
     for event in note_played_events.read() {
         let Ok((_, trigger)) = triggers.get(event.trigger) else {

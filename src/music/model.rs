@@ -59,7 +59,7 @@ impl Note {
     }
 }
 
-pub trait Scale {
+pub trait Scale: Send + Sync + 'static {
     fn size(&self) -> u8 {
         self.steps().len() as u8
     }
