@@ -28,7 +28,7 @@ fn handle_note_played<T>(
     T: Scale,
 {
     for event in note_played_events.read() {
-        let Ok((_, trigger)) = triggers.get(event.trigger) else {
+        let Ok((_, trigger)) = triggers.get(event.source) else {
             continue;
         };
         let Ok((_, note)) = notes.get(event.note) else {

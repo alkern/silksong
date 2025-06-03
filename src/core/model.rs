@@ -17,6 +17,11 @@ impl Trigger {
             ..default()
         }
     }
+
+    pub fn deactivate(&mut self) {
+        self.state = TriggerState::Inactive;
+        self.size = 0.0;
+    }
 }
 
 #[derive(Default, PartialEq, Debug)]
@@ -34,4 +39,7 @@ pub enum TriggerType {
 }
 
 #[derive(Component, Deref)]
-pub struct UnplayedNotes(pub Vec<Entity>);
+pub struct UntriggeredObjects(pub Vec<(Entity, Position)>);
+
+#[derive(Deref, Clone, Copy, Debug)]
+pub struct Position(pub Vec2);
