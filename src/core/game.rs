@@ -1,4 +1,4 @@
-use crate::core::model::{Note, Trigger, UnplayedNotes};
+use crate::core::model::{Note, Trigger, TriggerState, UnplayedNotes};
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::color::palettes::css::BLUE_VIOLET;
@@ -26,11 +26,14 @@ impl Plugin for CoreGamePlugin {
             )
             .add_systems(
                 OnEnter(GameState::Execute),
-                (enter_execution, update_trigger_icon_to_pause),
+                (
+                    enter_execution,
+                    update_trigger_icon_to_pause_enter_execution,
+                ),
             )
             .add_systems(
                 OnExit(GameState::Execute),
-                (exit_execution, update_trigger_icon_to_play),
+                (exit_execution, update_trigger_icon_to_play_exit_execution),
             );
     }
 }
@@ -87,6 +90,7 @@ fn enter_execution(
 fn exit_execution(mut triggers: Query<(Entity, &mut Trigger)>, mut commands: Commands) {
     for (entity, mut trigger) in &mut triggers {
         trigger.size = 0.0;
+        trigger.state = TriggerState::Inactive;
 
         let Ok(mut trigger) = commands.get_entity(entity) else {
             continue;
@@ -98,7 +102,7 @@ fn exit_execution(mut triggers: Query<(Entity, &mut Trigger)>, mut commands: Com
 /// The core game logic: check if as trigger hits a note.
 fn check_and_play_notes<T>(
     triggers: Query<(Entity, &mut Trigger, &Transform)>,
-    unplayed_notes: Query<&UnplayedNotes>,
+    unplayed_objects: Query<&UnplayedNotes>,
     notes: Query<(&Note, &Transform)>,
     config: Res<LevelConfig<T>>,
     time: Res<Time>,
@@ -107,12 +111,16 @@ fn check_and_play_notes<T>(
     T: Scale,
 {
     for (entity, mut trigger, trigger_position) in triggers {
+        // update trigger state
+        if trigger.state == TriggerState::Inactive {
+            continue;
+        }
         trigger.size += time.delta().as_secs_f32() * config.grow_factor;
 
-        let Ok(unplayed_notes_of_trigger) = unplayed_notes.get(entity) else {
+        // check if any notes should be played this frame
+        let Ok(unplayed_notes_of_trigger) = unplayed_objects.get(entity) else {
             continue;
         };
-
         for unplayed_note in unplayed_notes_of_trigger.0.clone() {
             let Ok((_, position)) = notes.get(unplayed_note) else {
                 continue;
@@ -130,6 +138,8 @@ fn check_and_play_notes<T>(
                 });
             }
         }
+
+        // check if any other triggers are hit
     }
 }
 
@@ -191,26 +201,32 @@ fn check_all_played(
     // next_state.set(GameState::Over);
 }
 
-fn update_trigger_icon_to_play(
+/// Set all trigger icons to play when leaving execution.
+fn update_trigger_icon_to_play_exit_execution(
     assets: Res<CoreAssets>,
     trigger: Query<(Entity, &Trigger)>,
-    commands: Commands,
+    mut commands: Commands,
 ) {
-    update_icon(assets.trigger_icon_play.clone(), trigger, commands);
+    for (entity, _) in &trigger {
+        update_icon(assets.trigger_icon_pause.clone(), entity, &mut commands);
+    }
 }
 
-fn update_trigger_icon_to_pause(
+/// Change the icon of the main trigger when entering execution.
+fn update_trigger_icon_to_pause_enter_execution(
     assets: Res<CoreAssets>,
     trigger: Query<(Entity, &Trigger)>,
-    commands: Commands,
+    mut commands: Commands,
 ) {
-    update_icon(assets.trigger_icon_pause.clone(), trigger, commands);
+    for (entity, trigger) in &trigger {
+        if trigger.state == TriggerState::Main {
+            update_icon(assets.trigger_icon_pause.clone(), entity, &mut commands);
+        }
+    }
 }
 
-fn update_icon(asset: Handle<Svg>, trigger: Query<(Entity, &Trigger)>, mut commands: Commands) {
-    let Ok((trigger, _)) = trigger.single() else {
-        return;
-    };
+/// Helper to set an icon on a trigger.
+fn update_icon(asset: Handle<Svg>, trigger: Entity, commands: &mut Commands) {
     let Ok(mut trigger) = commands.get_entity(trigger) else {
         return;
     };
