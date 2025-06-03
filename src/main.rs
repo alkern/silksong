@@ -53,9 +53,26 @@ fn main() {
         // camera
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
+        .add_systems(Update, close_on_esc)
         .run();
 }
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
+}
+
+fn close_on_esc(
+    mut commands: Commands,
+    focused_windows: Query<(Entity, &Window)>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
+    for (window, focus) in focused_windows.iter() {
+        if !focus.focused {
+            continue;
+        }
+
+        if input.just_pressed(KeyCode::Escape) {
+            commands.entity(window).despawn();
+        }
+    }
 }
