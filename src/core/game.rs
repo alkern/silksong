@@ -106,34 +106,16 @@ fn handle_events_to_triggered_object(
 
 /// Set the model data up for one execution. We keep some data in memory to simplify calculations.
 fn enter_execution(
-    triggers: Query<(Entity, &Trigger, &Transform)>,
-    notes: Query<(Entity, &Note, &Transform)>,
-    mut commands: Commands,
+    triggers: Query<(Entity, &Trigger)>,
     mut activate_triggers: EventWriter<TriggerActivatedEvent>,
 ) {
-    for (entity, trigger, _) in &triggers {
+    for (entity, trigger) in &triggers {
         if trigger.trigger_type == TriggerType::Main {
             activate_triggers.write(TriggerActivatedEvent {
                 source: None,
                 trigger: entity,
             });
         }
-
-        let Ok(mut trigger) = commands.get_entity(entity) else {
-            continue;
-        };
-
-        let mut untriggered: Vec<(Entity, Position)> = Vec::new();
-        notes
-            .into_iter()
-            .map(|(entity, _, transform)| (entity, Position(transform.translation.xy())))
-            .for_each(|it| untriggered.push(it));
-        triggers
-            .into_iter()
-            .map(|(entity, _, transform)| (entity, Position(transform.translation.xy())))
-            .filter(|(trigger, _)| trigger != &entity)
-            .for_each(|it| untriggered.push(it));
-        trigger.insert(UntriggeredObjects(untriggered));
     }
 }
 
@@ -278,12 +260,24 @@ fn update_trigger_icon_to_play_exit_execution(
 
 fn activate_trigger(
     mut events: EventReader<TriggerActivatedEvent>,
-    mut query: Query<&mut Trigger>,
+    mut triggers: Query<(Entity, &mut Trigger, &Transform)>,
+    notes: Query<(Entity, &Note, &Transform)>,
     assets: Res<CoreAssets>,
     mut commands: Commands,
 ) {
+    // collect all objects in a list template
+    let mut untriggered: Vec<(Entity, Position)> = Vec::new();
+    for (entity, _, transform) in &notes {
+        untriggered.push((entity, Position(transform.translation.xy())));
+    }
+    for (entity, _, transform) in &triggers {
+        untriggered.push((entity, Position(transform.translation.xy())));
+    }
+
     for event in events.read() {
-        if let Ok(mut trigger) = query.get_mut(event.trigger) {
+        let entity = event.trigger;
+        // activate the trigger
+        if let Ok((_, mut trigger, _)) = triggers.get_mut(event.trigger) {
             trigger.state = TriggerState::Active;
             update_icon(
                 assets.trigger_icon_pause.clone(),
@@ -291,6 +285,18 @@ fn activate_trigger(
                 &mut commands,
             );
         }
+
+        // add all other objects to this triggers unplayed objects list
+        let Ok(mut trigger) = commands.get_entity(entity) else {
+            continue;
+        };
+        let mut result: Vec<(Entity, Position)> = Vec::new();
+        for x in untriggered.clone() {
+            if x.0 != entity {
+                result.push(x);
+            }
+        }
+        trigger.insert(UntriggeredObjects(result));
     }
 }
 
