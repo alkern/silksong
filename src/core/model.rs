@@ -7,20 +7,30 @@ pub struct Note;
 pub struct Trigger {
     pub size: f32,
     pub state: TriggerState,
+    pub trigger_type: TriggerType,
 }
 
 impl Trigger {
-    pub fn from_state(state: TriggerState) -> Trigger {
-        Trigger { state, ..default() }
+    pub fn main() -> Trigger {
+        Trigger {
+            trigger_type: TriggerType::Main,
+            ..default()
+        }
     }
 }
 
 #[derive(Default, PartialEq, Debug)]
 pub enum TriggerState {
-    Main,
     #[default]
     Inactive,
     Active,
+}
+
+#[derive(Component, Default, PartialEq, Debug)]
+pub enum TriggerType {
+    Main,
+    #[default]
+    Passive,
 }
 
 #[derive(Component, Deref)]

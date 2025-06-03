@@ -1,4 +1,4 @@
-use crate::core::model::{Note, Trigger, TriggerState, UnplayedNotes};
+use crate::core::model::{Note, Trigger, TriggerState, TriggerType, UnplayedNotes};
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::color::palettes::css::BLUE_VIOLET;
@@ -13,9 +13,11 @@ impl Plugin for CoreGamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CoreAssets>()
             .add_event::<NotePlayedEvent>()
+            .add_event::<TriggerActivatedEvent>()
             .add_systems(
                 Update,
                 (
+                    activate_trigger,
                     check_and_play_notes::<NaturalMinorScale>,
                     draw_triggers,
                     handle_note_played,
@@ -24,13 +26,7 @@ impl Plugin for CoreGamePlugin {
                     .run_if(in_state(GameState::Execute))
                     .chain(),
             )
-            .add_systems(
-                OnEnter(GameState::Execute),
-                (
-                    enter_execution,
-                    update_trigger_icon_to_pause_enter_execution,
-                ),
-            )
+            .add_systems(OnEnter(GameState::Execute), (enter_execution,))
             .add_systems(
                 OnExit(GameState::Execute),
                 (exit_execution, update_trigger_icon_to_play_exit_execution),
@@ -70,13 +66,23 @@ pub struct NotePlayedEvent {
     pub trigger: Entity,
 }
 
+#[derive(Event, Debug)]
+pub struct TriggerActivatedEvent {
+    pub trigger: Entity,
+}
+
 /// Set the model data up for one execution. We keep some data in memory to simplify calculations.
 fn enter_execution(
     triggers: Query<(Entity, &Trigger)>,
     notes: Query<(Entity, &Note)>,
     mut commands: Commands,
+    mut activate_triggers: EventWriter<TriggerActivatedEvent>,
 ) {
-    for (entity, _) in &triggers {
+    for (entity, trigger) in &triggers {
+        if trigger.trigger_type == TriggerType::Main {
+            activate_triggers.write(TriggerActivatedEvent { trigger: entity });
+        }
+
         let Ok(mut trigger) = commands.get_entity(entity) else {
             continue;
         };
@@ -144,10 +150,12 @@ fn check_and_play_notes<T>(
 }
 
 /// Visualize the size of each trigger.
-fn draw_triggers(mut gizmos: Gizmos, triggers: Query<&Trigger>) {
-    for trigger in &triggers {
+fn draw_triggers(mut gizmos: Gizmos, triggers: Query<(&Trigger, &Transform)>) {
+    for (trigger, transform) in &triggers {
+        let position = Isometry2d::from_translation(transform.translation.xy());
+
         gizmos
-            .circle_2d(Isometry2d::IDENTITY, trigger.size, BLUE_VIOLET)
+            .circle_2d(position, trigger.size, BLUE_VIOLET)
             .resolution(64);
     }
 }
@@ -208,19 +216,24 @@ fn update_trigger_icon_to_play_exit_execution(
     mut commands: Commands,
 ) {
     for (entity, _) in &trigger {
-        update_icon(assets.trigger_icon_pause.clone(), entity, &mut commands);
+        update_icon(assets.trigger_icon_play.clone(), entity, &mut commands);
     }
 }
 
-/// Change the icon of the main trigger when entering execution.
-fn update_trigger_icon_to_pause_enter_execution(
+fn activate_trigger(
+    mut events: EventReader<TriggerActivatedEvent>,
+    mut query: Query<&mut Trigger>,
     assets: Res<CoreAssets>,
-    trigger: Query<(Entity, &Trigger)>,
     mut commands: Commands,
 ) {
-    for (entity, trigger) in &trigger {
-        if trigger.state == TriggerState::Main {
-            update_icon(assets.trigger_icon_pause.clone(), entity, &mut commands);
+    for event in events.read() {
+        if let Ok(mut trigger) = query.get_mut(event.trigger) {
+            trigger.state = TriggerState::Active;
+            update_icon(
+                assets.trigger_icon_pause.clone(),
+                event.trigger,
+                &mut commands,
+            );
         }
     }
 }
