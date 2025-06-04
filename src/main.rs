@@ -1,4 +1,5 @@
 mod core;
+mod input;
 mod level;
 mod math;
 mod music;
@@ -6,6 +7,7 @@ mod state;
 mod visuals;
 
 use crate::core::game::CoreGamePlugin;
+use crate::input::InputPlugin;
 use crate::level::creative_mode::CreativeModePlugin;
 use crate::music::audio::AudioPlugin;
 use crate::music::game::MusicPlugin;
@@ -46,6 +48,7 @@ fn main() {
         .add_plugins(AudioPlugin)
         .add_plugins(CoreGamePlugin)
         .add_plugins(GameStatePlugin)
+        .add_plugins(InputPlugin)
         .add_plugins(MusicPlugin)
         .add_plugins(VisualsPlugin)
         // level plugins
@@ -53,26 +56,9 @@ fn main() {
         // camera
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
-        .add_systems(Update, close_on_esc)
         .run();
 }
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
-}
-
-fn close_on_esc(
-    mut commands: Commands,
-    focused_windows: Query<(Entity, &Window)>,
-    input: Res<ButtonInput<KeyCode>>,
-) {
-    for (window, focus) in focused_windows.iter() {
-        if !focus.focused {
-            continue;
-        }
-
-        if input.just_pressed(KeyCode::Escape) {
-            commands.entity(window).despawn();
-        }
-    }
 }

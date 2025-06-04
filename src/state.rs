@@ -64,8 +64,7 @@ impl Plugin for GameStatePlugin {
                     resources_are_setup.run_if(in_state(GameState::SetupResources)),
                     game_objects_are_setup.run_if(in_state(GameState::SetupGameObjects)),
                 ),
-            )
-            .add_systems(Update, handle_game_loop.run_if(in_state(AppState::Game)));
+            );
     }
 }
 
@@ -79,20 +78,4 @@ fn resources_are_setup(mut next: ResMut<NextState<GameState>>) {
 fn game_objects_are_setup(mut next: ResMut<NextState<GameState>>) {
     next.set(GameState::Build);
     info!("game objects are setup");
-}
-
-fn handle_game_loop(
-    current_state: Res<State<GameState>>,
-    mut next_state: ResMut<NextState<GameState>>,
-    keys: Res<ButtonInput<KeyCode>>,
-) {
-    if keys.just_pressed(KeyCode::Space) {
-        match current_state.get() {
-            GameState::SetupResources => {}
-            GameState::SetupGameObjects => {}
-            GameState::Build => next_state.set(GameState::Execute),
-            GameState::Execute => next_state.set(GameState::Build),
-            GameState::Over => {}
-        }
-    }
 }
