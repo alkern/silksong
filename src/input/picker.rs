@@ -81,22 +81,32 @@ fn handle_item_placement(
         }
     }
 
+    // always execute just one event as another check besides the timer
+    let mut events = Vec::new();
     for event in mouse_button_input_events.read() {
-        if let Ok(position) = cursor_to_world(window, camera, event.window) {
-            match event.button {
-                MouseButton::Left => {
-                    place_object.write(PlaceObjectEvent(position));
-                }
-                MouseButton::Right => {
-                    delete_object.write(DeleteObjectEvent(position));
-                }
-                _ => {}
-            }
-        }
-
-        // start timer again
-        commands.spawn(InputTimer::new());
+        events.push(event);
     }
+
+    if events.is_empty() {
+        return;
+    }
+    let event = events[0];
+
+    // handle the input
+    if let Ok(position) = cursor_to_world(window, camera, event.window) {
+        match event.button {
+            MouseButton::Left => {
+                place_object.write(PlaceObjectEvent(position));
+            }
+            MouseButton::Right => {
+                delete_object.write(DeleteObjectEvent(position));
+            }
+            _ => {}
+        }
+    }
+
+    // start timer again
+    commands.spawn(InputTimer::new());
 }
 
 fn delete_object(
