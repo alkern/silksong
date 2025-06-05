@@ -71,6 +71,7 @@ fn setup(mut commands: Commands) {
                 "Use left mouse to place the selected object\n\n",
             ));
             parent.spawn(how_to_sentence("Use right mouse to delete an object\n\n"));
+            parent.spawn(how_to_sentence("Press Backspace to delete all objects\n\n"));
         });
 }
 

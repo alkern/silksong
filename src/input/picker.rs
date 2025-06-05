@@ -14,7 +14,7 @@ impl Plugin for PickerPlugin {
             .add_event::<DeleteObjectEvent>()
             .add_systems(
                 Update,
-                (handle_item_placement, place_object, delete_object)
+                (handle_mouse_input, place_object, delete_object, clear)
                     .run_if(in_state(GameState::Build)),
             );
     }
@@ -60,7 +60,7 @@ struct PlaceObjectEvent(Vec2);
 #[derive(Event, Debug)]
 struct DeleteObjectEvent(Vec2);
 
-fn handle_item_placement(
+fn handle_mouse_input(
     // input backoff
     time: Res<Time>,
     mut timer: Query<(Entity, &mut InputTimer)>,
@@ -188,4 +188,16 @@ fn cursor_to_world(
         .ok_or(BevyError::from(
             "could not calculate world position for mouse input",
         ))
+}
+
+fn clear(
+    mut commands: Commands,
+    entities: Query<Entity, With<ManuallyPlaced>>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
+    if input.just_pressed(KeyCode::Backspace) {
+        for entity in entities.iter() {
+            commands.entity(entity).despawn();
+        }
+    }
 }
