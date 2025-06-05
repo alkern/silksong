@@ -13,8 +13,11 @@ impl Plugin for PickerPlugin {
         app.add_systems(OnEnter(GameState::SetupGameObjects), setup)
             .add_systems(
                 Update,
-                (handle_item_switch_input, handle_item_placement)
-                    .run_if(in_state(MinimalGameState::Running)),
+                handle_item_switch_input.run_if(in_state(MinimalGameState::Running)),
+            )
+            .add_systems(
+                Update,
+                handle_item_placement.run_if(in_state(GameState::Build)),
             );
     }
 }
