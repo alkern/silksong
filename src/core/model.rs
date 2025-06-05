@@ -43,7 +43,4 @@ pub enum TriggerType {
 }
 
 #[derive(Component, Deref)]
-pub struct UntriggeredObjects(pub Vec<(Entity, Position)>);
-
-#[derive(Deref, Clone, Copy, Debug)]
-pub struct Position(pub Vec2);
+pub struct UntriggeredObjects(pub Vec<Entity>);

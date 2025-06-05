@@ -5,12 +5,11 @@
 //! possible in the time.
 
 use crate::core::game::{CoreAssets, LevelConfig};
-use crate::core::model::{Note, Trigger, TriggerType};
+use crate::core::model::{Note, TriggerType};
 use crate::music::model::NaturalMinorScale;
 use crate::state::GameState;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Origin, Svg2d};
-use std::f32::consts::PI;
 
 pub struct CreativeModePlugin;
 
@@ -71,15 +70,15 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
         )
     }
 
-    let max = 15;
-    for i in 0..=max {
-        let i = i as f32;
-        let max = max as f32;
-        commands.spawn(build_note(
-            Vec2::from_angle((2.0 * i / max) * PI) * (30.0 * (i + 1.0)),
-            &core_assets,
-        ));
-    }
+    // let max = 15;
+    // for i in 0..=max {
+    //     let i = i as f32;
+    //     let max = max as f32;
+    //     commands.spawn(build_note(
+    //         Vec2::from_angle((2.0 * i / max) * PI) * (30.0 * (i + 1.0)),
+    //         &core_assets,
+    //     ));
+    // }
 
     commands.spawn((
         Name::new("Main Trigger"),
@@ -89,10 +88,26 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
         Origin::Center,
     ));
 
-    commands.spawn((
-        Trigger::default(),
-        Transform::from_translation(Vec3::new(250.0, 250.0, 0.0)).with_scale(Vec3::splat(0.05)),
-        Svg2d(core_assets.trigger_icon_play.clone()),
-        Origin::Center,
-    ));
+    // commands.spawn((
+    //     Name::new("Second Trigger"),
+    //     TriggerType::Passive,
+    //     Transform::from_translation(Vec3::new(100.0, 100.0, 0.0)).with_scale(Vec3::splat(0.05)),
+    //     Svg2d(core_assets.trigger_icon_play.clone()),
+    //     Origin::Center,
+    // ));
+    //
+    // commands.spawn((
+    //     Name::new("Third Trigger"),
+    //     TriggerType::Passive,
+    //     Transform::from_translation(Vec3::new(150.0, 0.0, 0.0)).with_scale(Vec3::splat(0.05)),
+    //     Svg2d(core_assets.trigger_icon_play.clone()),
+    //     Origin::Center,
+    // ));
+
+    // commands.spawn((
+    //     Trigger::default(),
+    //     Transform::from_translation(Vec3::new(250.0, 250.0, 0.0)).with_scale(Vec3::splat(0.05)),
+    //     Svg2d(core_assets.trigger_icon_play.clone()),
+    //     Origin::Center,
+    // ));
 }

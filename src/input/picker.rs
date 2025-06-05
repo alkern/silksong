@@ -5,6 +5,7 @@ use bevy::color::palettes::basic::WHITE;
 use bevy::input::mouse::MouseButtonInput;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Origin, Svg2d};
+use std::ops::Add;
 
 pub(super) struct PickerPlugin;
 
@@ -41,6 +42,15 @@ impl SelectedItem {
             SelectedItem::Trigger => "Trigger".to_string(),
             SelectedItem::Note => "Node".to_string(),
         }
+    }
+}
+
+#[derive(Component, PartialEq, Deref, Debug)]
+struct InputTimer(Timer);
+
+impl InputTimer {
+    fn new() -> Self {
+        InputTimer(Timer::from_seconds(0.2, TimerMode::Once))
     }
 }
 
@@ -114,7 +124,19 @@ fn handle_item_placement(
     mut commands: Commands,
     selected_item: Query<&SelectedItem>,
     assets: Res<CoreAssets>,
+    time: Res<Time>,
+    mut timer: Query<(Entity, &mut InputTimer)>,
 ) {
+    if let Ok((entity, mut timer)) = timer.single_mut() {
+        timer.0.tick(time.delta());
+
+        if timer.0.just_finished() {
+            commands.get_entity(entity).unwrap().despawn();
+        } else {
+            return;
+        }
+    }
+
     for event in mouse_button_input_events.read() {
         if event.button == MouseButton::Left {
             // calculation taken from https://bevy-cheatbook.github.io/cookbook/cursor2world.html
@@ -132,7 +154,7 @@ fn handle_item_placement(
                 match item {
                     SelectedItem::Trigger => {
                         commands.spawn((
-                            Name::new(item.name()),
+                            Name::new(item.name().add(" manual")),
                             crate::core::model::TriggerType::Passive,
                             Transform::from_translation(world_position.extend(0.0))
                                 .with_scale(Vec3::splat(0.05)),
@@ -153,5 +175,7 @@ fn handle_item_placement(
                 }
             }
         }
+
+        commands.spawn(InputTimer::new());
     }
 }

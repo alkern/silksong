@@ -1,11 +1,9 @@
 use crate::core::model::{
-    Note, Position, Trigger, TriggerSize, TriggerState, TriggerType, UntriggeredObjects,
+    Note, Trigger, TriggerSize, TriggerState, TriggerType, UntriggeredObjects,
 };
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::color::palettes::css::BLUE_VIOLET;
-use bevy::ecs::relationship::RelationshipSourceCollection;
-use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Svg, Svg2d};
 
@@ -21,7 +19,7 @@ impl Plugin for CoreGamePlugin {
             .add_systems(
                 Update,
                 (
-                    check_and_play_notes::<NaturalMinorScale>,
+                    check_and_trigger_other::<NaturalMinorScale>,
                     draw_triggers,
                     handle_events_to_triggered_object,
                     handle_object_triggered,
@@ -71,7 +69,7 @@ pub struct NotePlayedEvent {
 #[derive(Event, Debug)]
 struct TriggerActivatedEvent {
     source: Option<Entity>,
-    trigger: Entity,
+    target: Entity,
 }
 
 #[derive(Event, Debug, Deref)]
@@ -97,7 +95,7 @@ fn handle_events_to_triggered_object(
     trigger_activated.read().for_each(|ev| {
         object_triggered.write(ObjectTriggeredEvent {
             source: ev.source,
-            object: ev.trigger,
+            object: ev.target,
         });
     });
 }
@@ -111,7 +109,7 @@ fn enter_execution(
         if trigger == &TriggerType::Main {
             activate_triggers.write(TriggerActivatedEvent {
                 source: None,
-                trigger: entity,
+                target: entity,
             });
         }
     }
@@ -128,10 +126,11 @@ fn exit_execution(
 }
 
 /// The core game logic: check if as trigger hits a note.
-fn check_and_play_notes<T>(
-    triggers: Query<(Entity, &mut TriggerSize, &TriggerState, &Transform)>,
+fn check_and_trigger_other<T>(
+    triggers: Query<(Entity, &mut TriggerSize, &TriggerState, &Name, &Transform)>,
     unplayed_objects: Query<&UntriggeredObjects>,
-    notes: Query<(&Note, &Transform)>,
+    notes: Query<&Note>,
+    positions: Query<&Transform>,
     config: Res<LevelConfig<T>>,
     time: Res<Time>,
     mut play_note_events: EventWriter<NotePlayedEvent>,
@@ -139,32 +138,53 @@ fn check_and_play_notes<T>(
 ) where
     T: Scale,
 {
-    for (entity, mut size, trigger_state, trigger_position) in triggers {
+    //TODO name nur zum debuggen
+    for (trigger, mut size, trigger_state, name, trigger_position) in triggers {
         // update trigger state
         if !trigger_state.is_active() {
             continue;
         }
         size.increment(time.delta().as_secs_f32() * config.grow_factor);
 
-        let Ok(unplayed_objects_of_trigger) = unplayed_objects.get(entity) else {
+        let Ok(unplayed_objects_of_trigger) = unplayed_objects.get(trigger) else {
+            // only test when unplayed objects are present
+            // should not happen, since a trigger is inactive in this condition
             continue;
         };
-        for unplayed in unplayed_objects_of_trigger.0.clone() {
-            if unplayed.1.xy().distance(trigger_position.translation.xy()) < **size {
+
+        info!(
+            "trigger {:?} has {} unplayed objects",
+            name,
+            unplayed_objects_of_trigger.0.len()
+        );
+
+        for other in &unplayed_objects_of_trigger.0 {
+            let Ok(position) = positions.get(*other) else {
+                continue;
+            };
+
+            if position
+                .translation
+                .xy()
+                .distance(trigger_position.translation.xy())
+                < **size
+            {
                 // we can implement more types here, other trigger is always the fallback
-                match notes.get(unplayed.0) {
+                match notes.get(*other) {
                     // unplayed is a note
                     Ok(_) => {
+                        info!("other is note");
                         play_note_events.write(NotePlayedEvent {
-                            source: entity,
-                            note: unplayed.0,
+                            source: trigger,
+                            note: *other,
                         });
                     }
                     _ => {
                         // unplayed is another trigger
+                        info!("other is trigger");
                         activate_trigger_events.write(TriggerActivatedEvent {
-                            source: Some(entity),
-                            trigger: unplayed.0,
+                            source: Some(trigger),
+                            target: *other,
                         });
                     }
                 }
@@ -187,39 +207,19 @@ fn draw_triggers(mut gizmos: Gizmos, triggers: Query<(&TriggerState, &TriggerSiz
     }
 }
 
-/// If a trigger hits a note, this note is played and removed from the triggers list of unplayed notes.
+/// If a trigger hits an object it is removed from the triggers list of unplayed notes.
 fn handle_object_triggered(
-    mut note_played_events: EventReader<ObjectTriggeredEvent>,
+    mut object_triggered_event: EventReader<ObjectTriggeredEvent>,
     mut all_untriggered: Query<&mut UntriggeredObjects>,
 ) {
-    // TODO refactor this whole thing
-    let mut to_remove: HashMap<Entity, Vec<Entity>> = HashMap::new();
-    for event in note_played_events.read() {
+    for event in object_triggered_event.read() {
         if let Some(trigger) = event.source {
-            match to_remove.get_mut(&trigger) {
-                None => {
-                    to_remove.insert(trigger, vec![event.object]);
-                }
-                Some(values) => {
-                    values.add(event.object);
-                }
-            };
-        }
-    }
+            // source is only None if it is the MainTrigger on enter_execution...
 
-    for (trigger, objects_to_remove) in to_remove {
-        let Ok(mut untriggered) = all_untriggered.get_mut(trigger) else {
-            continue;
-        };
-
-        let mut objects_to_keep = Vec::new();
-        for note in &untriggered.0 {
-            if !objects_to_remove.contains(&note.0) {
-                objects_to_keep.push(*note);
+            if let Ok(mut untriggered) = all_untriggered.get_mut(trigger) {
+                untriggered.0.retain(|it| it != &event.object);
             }
         }
-
-        untriggered.0 = objects_to_keep;
     }
 }
 
@@ -247,39 +247,37 @@ fn check_all_played(
 
 fn activate_trigger(
     mut events: EventReader<TriggerActivatedEvent>,
-    triggers: Query<(Entity, &mut Trigger, &Transform)>,
-    notes: Query<(Entity, &Note, &Transform)>,
+    triggers: Query<Entity, With<Trigger>>,
+    notes: Query<Entity, With<Note>>,
     assets: Res<CoreAssets>,
     mut commands: Commands,
 ) {
     // collect all objects in a list template
-    let mut untriggered: Vec<(Entity, Position)> = Vec::new();
-    for (entity, _, transform) in &notes {
-        untriggered.push((entity, Position(transform.translation.xy())));
+    let mut untriggered: Vec<Entity> = Vec::new();
+    for object in &notes {
+        untriggered.push(object);
     }
-    for (entity, _, transform) in &triggers {
-        untriggered.push((entity, Position(transform.translation.xy())));
+    for object in &triggers {
+        untriggered.push(object);
     }
 
     for event in events.read() {
-        let entity = event.trigger;
-        let Ok(mut trigger) = commands.get_entity(entity) else {
+        info!("there are {} objects", untriggered.len());
+        let trigger = event.target;
+        let Ok(mut target) = commands.get_entity(trigger) else {
             continue;
         };
+        // add all other objects to triggers unplayed objects list
+        let mut result: Vec<Entity> = untriggered.clone();
+        result.retain(|it| it != &trigger);
+        info!("adding {} unplayed objects", result.len());
 
         // activate the trigger
-        trigger
+        target
             .insert(TriggerState::Active)
-            .insert(Svg2d(assets.trigger_icon_pause.clone()));
-
-        // add all other objects to this triggers unplayed objects list
-        let mut result: Vec<(Entity, Position)> = Vec::new();
-        for x in untriggered.clone() {
-            if x.0 != entity {
-                result.push(x);
-            }
-        }
-        trigger.insert(UntriggeredObjects(result));
+            .insert(TriggerSize::zero())
+            .insert(Svg2d(assets.trigger_icon_pause.clone()))
+            .insert(UntriggeredObjects(result));
     }
 }
 
