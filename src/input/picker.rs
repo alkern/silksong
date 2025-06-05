@@ -20,6 +20,9 @@ impl Plugin for PickerPlugin {
     }
 }
 
+#[derive(Component)]
+struct ManuallyPlaced;
+
 #[derive(Component, PartialEq, Debug, Copy, Clone)]
 pub(super) enum SelectedItem {
     Trigger,
@@ -112,7 +115,7 @@ fn handle_item_placement(
 fn delete_object(
     mut events: EventReader<DeleteObjectEvent>,
     mut commands: Commands,
-    objects: Query<(Entity, &Transform)>,
+    objects: Query<(Entity, &Transform), With<ManuallyPlaced>>,
     main_trigger: Query<&TriggerType>,
 ) {
     for event in events.read() {
@@ -145,6 +148,7 @@ fn place_object(
             SelectedItem::Trigger => {
                 commands.spawn((
                     Name::new(item.name().add(" manual")),
+                    ManuallyPlaced,
                     TriggerType::Passive,
                     Transform::from_translation(world_position.extend(0.0))
                         .with_scale(Vec3::splat(0.05)),
@@ -155,6 +159,7 @@ fn place_object(
             SelectedItem::Note => {
                 commands.spawn((
                     Name::new(item.name()),
+                    ManuallyPlaced,
                     Note,
                     Transform::from_translation(world_position.extend(0.0))
                         .with_scale(Vec3::splat(0.025)),
