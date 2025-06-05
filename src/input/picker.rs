@@ -11,19 +11,22 @@ pub(super) struct PickerPlugin;
 
 impl Plugin for PickerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::SetupGameObjects), setup)
+        app.add_event::<PlaceObjectEvent>()
+            .add_event::<DeleteObjectEvent>()
+            .add_systems(OnEnter(GameState::SetupGameObjects), setup)
             .add_systems(
                 Update,
                 handle_item_switch_input.run_if(in_state(MinimalGameState::Running)),
             )
             .add_systems(
                 Update,
-                handle_item_placement.run_if(in_state(GameState::Build)),
+                (handle_item_placement, place_object, delete_object)
+                    .run_if(in_state(GameState::Build)),
             );
     }
 }
 
-#[derive(Component, PartialEq, Debug)]
+#[derive(Component, PartialEq, Debug, Copy, Clone)]
 enum SelectedItem {
     Trigger,
     Note,
@@ -53,6 +56,12 @@ impl InputTimer {
         InputTimer(Timer::from_seconds(0.15, TimerMode::Once))
     }
 }
+
+#[derive(Event, Debug)]
+struct PlaceObjectEvent(Vec2);
+
+#[derive(Event, Debug)]
+struct DeleteObjectEvent(Vec2);
 
 fn setup(mut commands: Commands) {
     commands
@@ -121,19 +130,14 @@ fn handle_item_placement(
     // input backoff
     time: Res<Time>,
     mut timer: Query<(Entity, &mut InputTimer)>,
-    // for position
+    // calculate mouse position
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
     window: Query<&Window>,
     camera: Query<(&Camera, &GlobalTransform)>,
-    //////
     // for interaction
     mut commands: Commands,
-    // placing items
-    selected_item: Query<&SelectedItem>,
-    assets: Res<CoreAssets>,
-    // removing items
-    objects: Query<(Entity, &Transform)>,
-    main_trigger: Query<&TriggerType>,
+    mut place_object: EventWriter<PlaceObjectEvent>,
+    mut delete_object: EventWriter<DeleteObjectEvent>,
 ) {
     // check timer, if the last interaction has been some frames ago
     if let Ok((entity, mut timer)) = timer.single_mut() {
@@ -147,14 +151,16 @@ fn handle_item_placement(
     }
 
     for event in mouse_button_input_events.read() {
-        match event.button {
-            MouseButton::Left => {
-                place_object(window, camera, &mut commands, selected_item, &assets, event);
+        if let Ok(position) = cursor_to_world(window, camera, event.window) {
+            match event.button {
+                MouseButton::Left => {
+                    place_object.write(PlaceObjectEvent(position));
+                }
+                MouseButton::Right => {
+                    delete_object.write(DeleteObjectEvent(position));
+                }
+                _ => {}
             }
-            MouseButton::Right => {
-                delete_object(window, camera, &mut commands, objects, main_trigger, event);
-            }
-            _ => {}
         }
 
         // start timer again
@@ -163,18 +169,17 @@ fn handle_item_placement(
 }
 
 fn delete_object(
-    window: Query<&Window>,
-    camera: Query<(&Camera, &GlobalTransform)>,
-    commands: &mut Commands,
+    mut events: EventReader<DeleteObjectEvent>,
+    mut commands: Commands,
     objects: Query<(Entity, &Transform)>,
     main_trigger: Query<&TriggerType>,
-    event: &MouseButtonInput,
 ) {
-    if let Ok(position) = cursor_to_world(window, camera, event.window) {
+    for event in events.read() {
         for object in &objects {
-            if object.1.translation.xy().distance(position) < 10.0 {
+            if object.1.translation.xy().distance(event.0) < 10.0 {
                 if let Ok(trigger) = main_trigger.get(object.0) {
                     if trigger == &TriggerType::Main {
+                        // main trigger cannot be removed
                         continue;
                     }
                 }
@@ -186,14 +191,13 @@ fn delete_object(
 }
 
 fn place_object(
-    window: Query<&Window>,
-    camera: Query<(&Camera, &GlobalTransform)>,
-    commands: &mut Commands,
+    mut events: EventReader<PlaceObjectEvent>,
+    mut commands: Commands,
     selected_item: Query<&SelectedItem>,
-    assets: &Res<CoreAssets>,
-    event: &MouseButtonInput,
+    assets: Res<CoreAssets>,
 ) {
-    if let Ok(world_position) = cursor_to_world(window, camera, event.window) {
+    for event in events.read() {
+        let world_position = event.0;
         let item = selected_item.single().expect("SelectedItem must exist");
 
         match item {
