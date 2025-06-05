@@ -1,5 +1,5 @@
 use crate::core::game::CoreAssets;
-use crate::core::model::Note;
+use crate::core::model::{Note, TriggerType};
 use crate::state::{GameState, MinimalGameState};
 use bevy::color::palettes::basic::WHITE;
 use bevy::input::mouse::MouseButtonInput;
@@ -40,7 +40,7 @@ impl SelectedItem {
     fn name(&self) -> String {
         match self {
             SelectedItem::Trigger => "Trigger".to_string(),
-            SelectedItem::Note => "Node".to_string(),
+            SelectedItem::Note => "Note".to_string(),
         }
     }
 }
@@ -50,7 +50,7 @@ struct InputTimer(Timer);
 
 impl InputTimer {
     fn new() -> Self {
-        InputTimer(Timer::from_seconds(0.2, TimerMode::Once))
+        InputTimer(Timer::from_seconds(0.15, TimerMode::Once))
     }
 }
 
@@ -118,15 +118,24 @@ fn handle_item_switch_input(
 }
 
 fn handle_item_placement(
+    // input backoff
+    time: Res<Time>,
+    mut timer: Query<(Entity, &mut InputTimer)>,
+    // for position
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
     window: Query<&Window>,
     camera: Query<(&Camera, &GlobalTransform)>,
+    //////
+    // for interaction
     mut commands: Commands,
+    // placing items
     selected_item: Query<&SelectedItem>,
     assets: Res<CoreAssets>,
-    time: Res<Time>,
-    mut timer: Query<(Entity, &mut InputTimer)>,
+    // removing items
+    objects: Query<(Entity, &Transform)>,
+    main_trigger: Query<&TriggerType>,
 ) {
+    // check timer, if the last interaction has been some frames ago
     if let Ok((entity, mut timer)) = timer.single_mut() {
         timer.0.tick(time.delta());
 
@@ -138,44 +147,95 @@ fn handle_item_placement(
     }
 
     for event in mouse_button_input_events.read() {
-        if event.button == MouseButton::Left {
-            // calculation taken from https://bevy-cheatbook.github.io/cookbook/cursor2world.html
-            let (camera, camera_transform) = camera.single().expect("Camera must exist");
-
-            if let Some(world_position) = window
-                .get(event.window)
-                .expect("Window must exist")
-                .cursor_position()
-                .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
-                .map(|ray| ray.origin.truncate())
-            {
-                let item = selected_item.single().expect("SelectedItem must exist");
-
-                match item {
-                    SelectedItem::Trigger => {
-                        commands.spawn((
-                            Name::new(item.name().add(" manual")),
-                            crate::core::model::TriggerType::Passive,
-                            Transform::from_translation(world_position.extend(0.0))
-                                .with_scale(Vec3::splat(0.05)),
-                            Svg2d(assets.trigger_icon_play.clone()),
-                            Origin::Center,
-                        ));
-                    }
-                    SelectedItem::Note => {
-                        commands.spawn((
-                            Name::new(item.name()),
-                            Note,
-                            Transform::from_translation(world_position.extend(0.0))
-                                .with_scale(Vec3::splat(0.025)),
-                            Svg2d(assets.note_icon.clone()),
-                            Origin::Center,
-                        ));
-                    }
-                }
+        match event.button {
+            MouseButton::Left => {
+                place_object(window, camera, &mut commands, selected_item, &assets, event);
             }
+            MouseButton::Right => {
+                delete_object(window, camera, &mut commands, objects, main_trigger, event);
+            }
+            _ => {}
         }
 
+        // start timer again
         commands.spawn(InputTimer::new());
     }
+}
+
+fn delete_object(
+    window: Query<&Window>,
+    camera: Query<(&Camera, &GlobalTransform)>,
+    commands: &mut Commands,
+    objects: Query<(Entity, &Transform)>,
+    main_trigger: Query<&TriggerType>,
+    event: &MouseButtonInput,
+) {
+    if let Ok(position) = cursor_to_world(window, camera, event.window) {
+        for object in &objects {
+            if object.1.translation.xy().distance(position) < 10.0 {
+                if let Ok(trigger) = main_trigger.get(object.0) {
+                    if trigger == &TriggerType::Main {
+                        continue;
+                    }
+                }
+
+                commands.entity(object.0).despawn();
+            }
+        }
+    }
+}
+
+fn place_object(
+    window: Query<&Window>,
+    camera: Query<(&Camera, &GlobalTransform)>,
+    commands: &mut Commands,
+    selected_item: Query<&SelectedItem>,
+    assets: &Res<CoreAssets>,
+    event: &MouseButtonInput,
+) {
+    if let Ok(world_position) = cursor_to_world(window, camera, event.window) {
+        let item = selected_item.single().expect("SelectedItem must exist");
+
+        match item {
+            SelectedItem::Trigger => {
+                commands.spawn((
+                    Name::new(item.name().add(" manual")),
+                    TriggerType::Passive,
+                    Transform::from_translation(world_position.extend(0.0))
+                        .with_scale(Vec3::splat(0.05)),
+                    Svg2d(assets.trigger_icon_play.clone()),
+                    Origin::Center,
+                ));
+            }
+            SelectedItem::Note => {
+                commands.spawn((
+                    Name::new(item.name()),
+                    Note,
+                    Transform::from_translation(world_position.extend(0.0))
+                        .with_scale(Vec3::splat(0.025)),
+                    Svg2d(assets.note_icon.clone()),
+                    Origin::Center,
+                ));
+            }
+        }
+    }
+}
+
+fn cursor_to_world(
+    windows: Query<&Window>,
+    camera: Query<(&Camera, &GlobalTransform)>,
+    window: Entity,
+) -> Result<Vec2> {
+    // calculation taken from https://bevy-cheatbook.github.io/cookbook/cursor2world.html
+    let (camera, camera_transform) = camera.single()?;
+
+    windows
+        .get(window)
+        .expect("Window must exist")
+        .cursor_position()
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
+        .map(|ray| ray.origin.truncate())
+        .ok_or(BevyError::from(
+            "could not calculate world position for mouse input",
+        ))
 }
