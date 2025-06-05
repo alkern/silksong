@@ -1,6 +1,8 @@
 mod picker;
+mod ui;
 
 use crate::input::picker::PickerPlugin;
+use crate::input::ui::UiPlugin;
 use crate::state::{AppState, GameState};
 use bevy::prelude::*;
 
@@ -8,7 +10,7 @@ pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(PickerPlugin)
+        app.add_plugins((PickerPlugin, UiPlugin))
             .add_systems(Update, close_on_esc)
             .add_systems(Update, handle_game_loop.run_if(in_state(AppState::Game)));
     }
