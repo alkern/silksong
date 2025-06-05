@@ -4,34 +4,38 @@ use bevy::prelude::*;
 pub struct Note;
 
 #[derive(Component, Default, Debug)]
-pub struct Trigger {
-    pub size: f32,
-    pub state: TriggerState,
-    pub trigger_type: TriggerType,
-}
+#[require(TriggerSize)]
+pub struct Trigger;
 
-impl Trigger {
-    pub fn main() -> Trigger {
-        Trigger {
-            trigger_type: TriggerType::Main,
-            ..default()
-        }
+#[derive(Component, Default, PartialEq, Debug, Deref)]
+pub struct TriggerSize(f32);
+
+impl TriggerSize {
+    pub fn zero() -> Self {
+        TriggerSize(0.0)
     }
 
-    pub fn deactivate(&mut self) {
-        self.state = TriggerState::Inactive;
-        self.size = 0.0;
+    pub fn increment(&mut self, value: f32) {
+        self.0 += value;
     }
 }
 
-#[derive(Default, PartialEq, Debug)]
+#[derive(Component, Default, PartialEq, Debug)]
+#[require(Trigger)]
 pub enum TriggerState {
     #[default]
     Inactive,
     Active,
 }
 
+impl TriggerState {
+    pub fn is_active(&self) -> bool {
+        *self == TriggerState::Active
+    }
+}
+
 #[derive(Component, Default, PartialEq, Debug)]
+#[require(Trigger, TriggerState, TriggerSize)]
 pub enum TriggerType {
     Main,
     #[default]

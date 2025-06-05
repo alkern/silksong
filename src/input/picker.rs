@@ -133,7 +133,7 @@ fn handle_item_placement(
                     SelectedItem::Trigger => {
                         commands.spawn((
                             Name::new(item.name()),
-                            crate::core::model::Trigger::default(),
+                            crate::core::model::TriggerType::Passive,
                             Transform::from_translation(world_position.extend(0.0))
                                 .with_scale(Vec3::splat(0.05)),
                             Svg2d(assets.trigger_icon_play.clone()),

@@ -5,7 +5,7 @@
 //! possible in the time.
 
 use crate::core::game::{CoreAssets, LevelConfig};
-use crate::core::model::{Note, Trigger};
+use crate::core::model::{Note, Trigger, TriggerType};
 use crate::music::model::NaturalMinorScale;
 use crate::state::GameState;
 use bevy::prelude::*;
@@ -83,7 +83,7 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
 
     commands.spawn((
         Name::new("Main Trigger"),
-        Trigger::main(),
+        TriggerType::Main,
         Transform::default().with_scale(Vec3::splat(0.05)),
         Svg2d(core_assets.trigger_icon_play.clone()),
         Origin::Center,
@@ -95,6 +95,4 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
         Svg2d(core_assets.trigger_icon_play.clone()),
         Origin::Center,
     ));
-
-    info!("demo entities setup")
 }

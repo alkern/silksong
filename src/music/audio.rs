@@ -125,7 +125,6 @@ impl BackgroundTimer {
         self.0.tick(duration);
 
         if self.0.just_finished() {
-            info!("timer just finished");
             self.1.proceed();
             return Some(self.1.get_repeat());
         }
