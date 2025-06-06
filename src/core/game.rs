@@ -15,6 +15,7 @@ impl Plugin for CoreGamePlugin {
             .add_event::<TriggerActivatedEvent>()
             .add_event::<TriggerDeactivatedEvent>()
             .add_event::<ObjectTriggeredEvent>()
+            .add_event::<AllPlayedEvent>()
             .add_observer(activate_trigger)
             .add_systems(
                 Update,
@@ -24,6 +25,7 @@ impl Plugin for CoreGamePlugin {
                     handle_events_to_triggered_object,
                     handle_object_triggered,
                     check_all_played,
+                    handle_all_played,
                 )
                     .run_if(in_state(GameState::Execute))
                     .chain(),
@@ -80,6 +82,9 @@ struct ObjectTriggeredEvent {
     source: Option<Entity>,
     object: Entity,
 }
+
+#[derive(Event, Debug)]
+struct AllPlayedEvent;
 
 fn handle_events_to_triggered_object(
     mut note_played: EventReader<NotePlayedEvent>,
@@ -227,7 +232,7 @@ fn handle_object_triggered(
 fn check_all_played(
     mut notes: Query<(Entity, &UntriggeredObjects)>,
     mut events: EventWriter<TriggerDeactivatedEvent>,
-    mut next_state: ResMut<NextState<GameState>>,
+    mut all_played_events: EventWriter<AllPlayedEvent>,
 ) {
     let mut all_done = true;
     for (entity, notes) in &mut notes {
@@ -239,6 +244,15 @@ fn check_all_played(
     }
 
     if all_done {
+        all_played_events.write(AllPlayedEvent);
+    }
+}
+
+fn handle_all_played(
+    mut events: EventReader<AllPlayedEvent>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    for _ in events.read() {
         next_state.set(GameState::Build);
     }
 }

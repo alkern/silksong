@@ -3,17 +3,13 @@ use crate::core::model::{Note, Trigger};
 use crate::math::calculate_scale_position_by_angle;
 use crate::music::audio::PianoAudioAssets;
 use crate::music::model::{NaturalMinorScale, Scale};
-use crate::state::GameState;
 use bevy::prelude::*;
 
 pub struct MusicPlugin;
 
 impl Plugin for MusicPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            handle_note_played::<NaturalMinorScale>.run_if(in_state(GameState::Execute)),
-        );
+        app.add_systems(Update, handle_note_played::<NaturalMinorScale>);
     }
 }
 
