@@ -54,7 +54,7 @@ fn setup(mut commands: Commands) {
                     ..default()
                 },
                 SelectedItem::Trigger,
-                Text::new("\nTrigger"),
+                Text::new("Trigger"),
                 TextFont {
                     font_size: 20.0,
                     ..default()
