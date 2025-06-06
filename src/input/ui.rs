@@ -17,83 +17,37 @@ impl Plugin for UiPlugin {
 }
 
 fn setup(mut commands: Commands) {
-    commands
-        .spawn((
-            Name::new("Picker UI"),
-            Node {
-                // position_type: PositionType::Absolute,
-                display: Display::Grid,
-                width: Val::Percent(15.0),
-                height: Val::Percent(5.0),
-                margin: UiRect::all(Val::Px(25.0)),
-                align_self: AlignSelf::Stretch,
-                justify_self: JustifySelf::Stretch,
-                flex_wrap: FlexWrap::Wrap,
-                justify_content: JustifyContent::FlexStart,
-                align_items: AlignItems::FlexStart,
-                align_content: AlignContent::FlexStart,
-                ..default()
-            },
-            BackgroundColor(WHITE.into()),
-            // BorderColor(RED.into()),
-            BorderRadius::all(Val::Px(10.0)),
-            Outline {
-                width: Val::Px(6.),
-                offset: Val::Px(6.),
-                color: Color::WHITE,
-            },
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                Name::new("Current Item Node"),
-                Node {
-                    // position_type: PositionType::Absolute,
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::FlexStart,
-                    padding: UiRect::all(Val::Px(4.0)),
-                    ..default()
-                },
-                SelectedItem::Trigger,
-                Text::new("\nTrigger"),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::BLACK),
-            ));
-
-            parent.spawn(how_to_sentence("\n\n"));
-            parent.spawn(how_to_sentence("Press Space to start/stop\n\n"));
-            parent.spawn(how_to_sentence(
-                "Press Ctrl to select which object to place\n\n",
-            ));
-            parent.spawn(how_to_sentence(
-                "Use left mouse to place the selected object\n\n",
-            ));
-            parent.spawn(how_to_sentence("Use right mouse to delete an object\n\n"));
-            parent.spawn(how_to_sentence("Press Backspace to delete all objects\n\n"));
-        });
-}
-
-fn how_to_sentence(content: &str) -> impl Bundle {
-    (
-        Name::new("How To Textbox"),
+    commands.spawn((
+        Name::new("Picker UI"),
         Node {
             // position_type: PositionType::Absolute,
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
+            display: Display::Grid,
+            width: Val::Percent(15.0),
+            height: Val::Percent(8.0),
+            margin: UiRect::all(Val::Px(10.0)),
+            align_self: AlignSelf::Stretch,
+            justify_self: JustifySelf::Stretch,
+            flex_wrap: FlexWrap::Wrap,
             justify_content: JustifyContent::FlexStart,
-            padding: UiRect::all(Val::Px(4.0)),
+            align_items: AlignItems::FlexStart,
+            align_content: AlignContent::FlexStart,
             ..default()
         },
-        Text::new(content),
+        BackgroundColor(WHITE.into()),
+        BorderRadius::all(Val::Px(10.0)),
+        Outline {
+            width: Val::Px(6.),
+            offset: Val::Px(6.),
+            color: Color::WHITE,
+        },
+        SelectedItem::Note,
+        Text::new("Note"),
         TextFont {
-            font_size: 15.0,
+            font_size: 20.0,
             ..default()
         },
         TextColor(Color::BLACK),
-    )
+    ));
 }
 
 fn handle_item_switch_input(
@@ -105,7 +59,7 @@ fn handle_item_switch_input(
         if let Ok((entity, item, mut text)) = ui.single_mut() {
             let next_item = item.switch();
             let mut new_text = String::new();
-            write!(new_text, "\n{}", next_item.name()).expect("string concatenation should work");
+            write!(new_text, "{}", next_item.name()).expect("string concatenation should work");
             text.0 = new_text;
             commands.entity(entity).insert(next_item);
         }
