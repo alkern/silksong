@@ -15,11 +15,11 @@ use crate::state::GameStatePlugin;
 use crate::visual::VisualPlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
-use bevy_hanabi::HanabiPlugin;
 use bevy_svg::prelude::SvgPlugin;
 
 fn main() {
-    App::new()
+    let mut app = App::new();
+    app
         // Bevy plugins
         .add_plugins(DefaultPlugins.set(AssetPlugin {
             // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -30,7 +30,6 @@ fn main() {
         }))
         // external plugins
         .add_plugins(SvgPlugin)
-        .add_plugins(HanabiPlugin)
         // game plugins
         .add_plugins(AudioPlugin)
         .add_plugins(CoreGamePlugin)
@@ -42,8 +41,9 @@ fn main() {
         .add_plugins(CreativeModePlugin)
         // camera
         .insert_resource(ClearColor(Color::BLACK))
-        .add_systems(Startup, setup)
-        .run();
+        .add_systems(Startup, setup);
+
+    app.run();
 }
 
 fn setup(mut commands: Commands) {
