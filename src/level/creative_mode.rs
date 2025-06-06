@@ -63,7 +63,7 @@ fn setup_entities(mut commands: Commands, core_assets: Res<CoreAssets>) {
     commands.spawn((
         Name::new("Main Trigger"),
         TriggerType::Main,
-        Transform::default().with_scale(Vec3::splat(0.05)),
+        Transform::default().with_scale(Vec3::splat(0.1)),
         Svg2d(core_assets.trigger_icon_play.clone()),
         Origin::Center,
     ));

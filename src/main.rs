@@ -4,7 +4,7 @@ mod level;
 mod math;
 mod music;
 mod state;
-mod visuals;
+mod visual;
 
 use crate::core::game::CoreGamePlugin;
 use crate::input::InputPlugin;
@@ -12,7 +12,7 @@ use crate::level::creative_mode::CreativeModePlugin;
 use crate::music::audio::AudioPlugin;
 use crate::music::game::MusicPlugin;
 use crate::state::GameStatePlugin;
-use crate::visuals::VisualsPlugin;
+use crate::visual::VisualPlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
@@ -50,7 +50,7 @@ fn main() {
         .add_plugins(GameStatePlugin)
         .add_plugins(InputPlugin)
         .add_plugins(MusicPlugin)
-        .add_plugins(VisualsPlugin)
+        .add_plugins(VisualPlugin)
         // level plugins
         .add_plugins(CreativeModePlugin)
         // camera

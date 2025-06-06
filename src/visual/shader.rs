@@ -6,9 +6,9 @@ use bevy::window::WindowResized;
 
 const SHADER_PATH: &str = "shaders/silk.wgsl";
 
-pub struct VisualsPlugin;
+pub(super) struct ShaderPlugin;
 
-impl Plugin for VisualsPlugin {
+impl Plugin for ShaderPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(Material2dPlugin::<SilkMaterial>::default())
             .add_systems(Startup, setup)
@@ -62,13 +62,12 @@ fn update(time: Res<Time>, mut backgrounds: ResMut<Assets<SilkMaterial>>) {
 
 fn handle_window_resize(
     mut events: EventReader<WindowResized>,
-    mut shader: Query<(&Shader, &mut Transform)>,
+    mut shader: Query<&mut Transform, With<Shader>>,
 ) {
     for event in events.read() {
         shader
             .single_mut()
             .expect("there must be exactly one background shader")
-            .1
             .scale = Vec3::new(event.width, event.height, 0.);
     }
 }
