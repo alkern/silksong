@@ -17,7 +17,7 @@ pub enum ColorPalette {
 }
 
 impl ColorPalette {
-    pub fn to_rgba(&self) -> Srgba {
+    pub fn as_rgba(&self) -> Srgba {
         match self {
             ColorPalette::BlueViolet => BLUE_VIOLET,
             ColorPalette::CornflowerBlue => CORNFLOWER_BLUE,
@@ -56,7 +56,7 @@ impl ColorPalette {
 
 impl From<&ColorPalette> for Vec4 {
     fn from(value: &ColorPalette) -> Self {
-        let rgba = value.to_rgba();
+        let rgba = value.as_rgba();
         Vec4::new(rgba.red, rgba.green, rgba.blue, rgba.alpha)
     }
 }

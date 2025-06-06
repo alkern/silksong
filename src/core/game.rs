@@ -258,7 +258,6 @@ fn activate_trigger(
     }
 
     for event in events.read() {
-        info!("there are {} objects", untriggered.len());
         let trigger = event.target;
         let Ok(mut target) = commands.get_entity(trigger) else {
             continue;
@@ -266,7 +265,6 @@ fn activate_trigger(
         // add all other objects to triggers unplayed objects list
         let mut result: Vec<Entity> = untriggered.clone();
         result.retain(|it| it != &trigger);
-        info!("adding {} unplayed objects", result.len());
 
         // activate the trigger
         target
@@ -282,7 +280,7 @@ fn activate_trigger(
         commands.spawn((
             ParticleEffect::new(effects.get(&color.0)),
             ParticleTimer::new(),
-            transform.clone(),
+            *transform,
         ));
     }
 }

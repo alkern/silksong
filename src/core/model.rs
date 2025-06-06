@@ -48,7 +48,7 @@ pub struct TriggerColor(pub ColorPalette);
 
 impl From<&TriggerColor> for Color {
     fn from(value: &TriggerColor) -> Self {
-        value.0.to_rgba().into()
+        value.0.as_rgba().into()
     }
 }
 
