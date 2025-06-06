@@ -27,7 +27,7 @@ impl Plugin for CoreGamePlugin {
                     .run_if(in_state(GameState::Execute))
                     .chain(),
             )
-            .add_systems(Update, (activate_trigger, deactivate_trigger))
+            .add_systems(Update, (activate_trigger, deactivate_trigger).chain())
             .add_systems(OnEnter(GameState::Execute), enter_execution)
             .add_systems(OnExit(GameState::Execute), exit_execution);
     }
@@ -242,7 +242,13 @@ fn activate_trigger(
     notes: Query<Entity, With<Note>>,
     assets: Res<CoreAssets>,
     mut commands: Commands,
+    state: Res<State<GameState>>,
 ) {
+    // additional safety check: since events can arrive up to two updates later, this is sometimes triggered
+    if *state != GameState::Execute {
+        return;
+    }
+
     // collect all objects in a list template
     let mut untriggered: Vec<Entity> = Vec::new();
     for object in &notes {
