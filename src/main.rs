@@ -21,13 +21,28 @@ fn main() {
     let mut app = App::new();
     app
         // Bevy plugins
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            // Wasm builds will check for meta files (that don't exist) if this isn't set.
-            // This causes errors and even panics in web builds on itch.
-            // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
-            meta_check: AssetMetaCheck::Never,
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(AssetPlugin {
+                    // Wasm builds will check for meta files (that don't exist) if this isn't set.
+                    // This causes errors and even panics in web builds on itch.
+                    // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
+                    meta_check: AssetMetaCheck::Never,
+                    ..default()
+                })
+                // https://github.com/DylanRJohnston/abiogenesis/blob/main/abiogenesis/src/main.rs
+                .set(WindowPlugin {
+                    primary_window: Window {
+                        title: "Silksong".into(),
+                        // #[cfg(not(target_arch = "wasm32"))]
+                        // resolution: WindowResolution::new(1920.0, 1080.0),
+                        fit_canvas_to_parent: true,
+                        ..default()
+                    }
+                    .into(),
+                    ..default()
+                }),
+        )
         // external plugins
         .add_plugins(SvgPlugin)
         // game plugins
