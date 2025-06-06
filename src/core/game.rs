@@ -113,7 +113,7 @@ fn enter_execution(
                 source: None,
                 target: entity,
             };
-            activate_triggers.write(event.clone());
+            activate_triggers.write(event);
             commands.trigger(event);
         }
     }
