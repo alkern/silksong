@@ -51,7 +51,7 @@ struct InputTimer(Timer);
 
 impl InputTimer {
     fn new() -> Self {
-        InputTimer(Timer::from_seconds(0.15, TimerMode::Once))
+        InputTimer(Timer::from_seconds(0.25, TimerMode::Once))
     }
 }
 
