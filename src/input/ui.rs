@@ -2,6 +2,7 @@ use crate::input::picker::SelectedItem;
 use crate::state::{GameState, MinimalGameState};
 use bevy::color::palettes::basic::WHITE;
 use bevy::prelude::*;
+use std::fmt::Write;
 
 pub(super) struct UiPlugin;
 
