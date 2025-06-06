@@ -1,10 +1,11 @@
+use crate::visual::color::ColorPalette;
 use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct Note;
 
 #[derive(Component, Default, Debug)]
-#[require(TriggerSize)]
+#[require(TriggerSize, TriggerColor)]
 pub struct Trigger;
 
 #[derive(Component, Default, PartialEq, Debug, Deref)]
@@ -40,6 +41,15 @@ pub enum TriggerType {
     Main,
     #[default]
     Passive,
+}
+
+#[derive(Component, Default, PartialEq, Debug)]
+pub struct TriggerColor(pub ColorPalette);
+
+impl From<&TriggerColor> for Color {
+    fn from(value: &TriggerColor) -> Self {
+        value.0.to_rgba().into()
+    }
 }
 
 #[derive(Component, Deref)]

@@ -1,9 +1,8 @@
 use crate::core::model::{
-    Note, Trigger, TriggerSize, TriggerState, TriggerType, UntriggeredObjects,
+    Note, Trigger, TriggerColor, TriggerSize, TriggerState, TriggerType, UntriggeredObjects,
 };
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
-use bevy::color::palettes::css::BLUE_VIOLET;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Svg, Svg2d};
 
@@ -127,7 +126,7 @@ fn exit_execution(
 
 /// The core game logic: check if as trigger hits a note.
 fn check_and_trigger_other<T>(
-    triggers: Query<(Entity, &mut TriggerSize, &TriggerState, &Name, &Transform)>,
+    triggers: Query<(Entity, &mut TriggerSize, &TriggerState, &Transform)>,
     unplayed_objects: Query<&UntriggeredObjects>,
     notes: Query<&Note>,
     positions: Query<&Transform>,
@@ -138,8 +137,7 @@ fn check_and_trigger_other<T>(
 ) where
     T: Scale,
 {
-    //TODO name nur zum debuggen
-    for (trigger, mut size, trigger_state, name, trigger_position) in triggers {
+    for (trigger, mut size, trigger_state, trigger_position) in triggers {
         // update trigger state
         if !trigger_state.is_active() {
             continue;
@@ -151,12 +149,6 @@ fn check_and_trigger_other<T>(
             // should not happen, since a trigger is inactive in this condition
             continue;
         };
-
-        info!(
-            "trigger {:?} has {} unplayed objects",
-            name,
-            unplayed_objects_of_trigger.0.len()
-        );
 
         for other in &unplayed_objects_of_trigger.0 {
             let Ok(position) = positions.get(*other) else {
@@ -173,7 +165,6 @@ fn check_and_trigger_other<T>(
                 match notes.get(*other) {
                     // unplayed is a note
                     Ok(_) => {
-                        info!("other is note");
                         play_note_events.write(NotePlayedEvent {
                             source: trigger,
                             note: *other,
@@ -181,7 +172,6 @@ fn check_and_trigger_other<T>(
                     }
                     _ => {
                         // unplayed is another trigger
-                        info!("other is trigger");
                         activate_trigger_events.write(TriggerActivatedEvent {
                             source: Some(trigger),
                             target: *other,
@@ -194,16 +184,17 @@ fn check_and_trigger_other<T>(
 }
 
 /// Visualize the size of each trigger.
-fn draw_triggers(mut gizmos: Gizmos, triggers: Query<(&TriggerState, &TriggerSize, &Transform)>) {
-    for (state, size, transform) in &triggers {
+fn draw_triggers(
+    mut gizmos: Gizmos,
+    triggers: Query<(&TriggerState, &TriggerSize, &TriggerColor, &Transform)>,
+) {
+    for (state, size, color, transform) in &triggers {
         if !state.is_active() {
             continue;
         }
 
         let position = Isometry2d::from_translation(transform.translation.xy());
-        gizmos
-            .circle_2d(position, **size, BLUE_VIOLET)
-            .resolution(64);
+        gizmos.circle_2d(position, **size, color).resolution(64);
     }
 }
 

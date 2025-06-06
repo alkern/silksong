@@ -1,6 +1,7 @@
 use crate::core::game::CoreAssets;
-use crate::core::model::{Note, TriggerType};
+use crate::core::model::{Note, TriggerColor, TriggerType};
 use crate::state::GameState;
+use crate::visual::color::ColorPalette;
 use bevy::input::mouse::MouseButtonInput;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Origin, Svg2d};
@@ -146,10 +147,13 @@ fn place_object(
 
         match item {
             SelectedItem::Trigger => {
+                let color = ColorPalette::get_random(world_position);
+
                 commands.spawn((
                     Name::new(item.name().add(" manual")),
                     ManuallyPlaced,
                     TriggerType::Passive,
+                    TriggerColor(color),
                     Transform::from_translation(world_position.extend(0.0))
                         .with_scale(Vec3::splat(0.05)),
                     Svg2d(assets.trigger_icon_play.clone()),

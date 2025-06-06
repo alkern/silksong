@@ -1,6 +1,7 @@
 use crate::visual::shader::ShaderPlugin;
 use bevy::prelude::*;
 
+pub mod color;
 mod shader;
 
 pub struct VisualPlugin;
