@@ -54,7 +54,7 @@ fn setup(mut commands: Commands) {
                     ..default()
                 },
                 SelectedItem::Trigger,
-                Text::new("Trigger"),
+                Text::new("\nTrigger"),
                 TextFont {
                     font_size: 20.0,
                     ..default()
@@ -103,10 +103,8 @@ fn handle_item_switch_input(
     if input.any_just_pressed([KeyCode::ControlLeft, KeyCode::ControlRight]) {
         if let Ok((entity, item, mut text)) = ui.single_mut() {
             let next_item = item.switch();
-            // TODO string concatenation
-            let mut new_text = "\n".to_string();
-            new_text.push_str(next_item.name().as_str());
-
+            let mut new_text = String::new();
+            write!(new_text, "\n{}", next_item.name()).expect("string concatenation should work");
             text.0 = new_text;
             commands.entity(entity).insert(next_item);
         }
