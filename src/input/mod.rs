@@ -19,6 +19,12 @@ impl Plugin for InputPlugin {
     }
 }
 
+#[cfg(target_family = "wasm")]
+fn close_on_esc() {
+    // do nothing
+}
+
+#[cfg(not(target_family = "wasm"))]
 fn close_on_esc(
     mut commands: Commands,
     focused_windows: Query<(Entity, &Window)>,
