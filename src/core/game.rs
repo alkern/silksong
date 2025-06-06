@@ -15,6 +15,7 @@ impl Plugin for CoreGamePlugin {
             .add_event::<TriggerActivatedEvent>()
             .add_event::<TriggerDeactivatedEvent>()
             .add_event::<ObjectTriggeredEvent>()
+            .add_observer(activate_trigger)
             .add_systems(
                 Update,
                 (
@@ -27,7 +28,7 @@ impl Plugin for CoreGamePlugin {
                     .run_if(in_state(GameState::Execute))
                     .chain(),
             )
-            .add_systems(Update, (activate_trigger, deactivate_trigger).chain())
+            .add_systems(Update, deactivate_trigger)
             .add_systems(OnEnter(GameState::Execute), enter_execution)
             .add_systems(OnExit(GameState::Execute), exit_execution);
     }
@@ -65,7 +66,7 @@ pub struct NotePlayedEvent {
     pub note: Entity,
 }
 
-#[derive(Event, Debug)]
+#[derive(Event, Debug, Copy, Clone)]
 pub struct TriggerActivatedEvent {
     pub source: Option<Entity>,
     pub target: Entity,
@@ -103,13 +104,17 @@ fn handle_events_to_triggered_object(
 fn enter_execution(
     triggers: Query<(Entity, &TriggerType)>,
     mut activate_triggers: EventWriter<TriggerActivatedEvent>,
+    mut commands: Commands,
 ) {
     for (entity, trigger) in &triggers {
         if trigger == &TriggerType::Main {
-            activate_triggers.write(TriggerActivatedEvent {
+            // TODO duplication
+            let event = TriggerActivatedEvent {
                 source: None,
                 target: entity,
-            });
+            };
+            activate_triggers.write(event.clone());
+            commands.trigger(event);
         }
     }
 }
@@ -134,6 +139,7 @@ fn check_and_trigger_other<T>(
     time: Res<Time>,
     mut play_note_events: EventWriter<NotePlayedEvent>,
     mut activate_trigger_events: EventWriter<TriggerActivatedEvent>,
+    mut commands: Commands,
 ) where
     T: Scale,
 {
@@ -172,10 +178,13 @@ fn check_and_trigger_other<T>(
                     }
                     _ => {
                         // unplayed is another trigger
-                        activate_trigger_events.write(TriggerActivatedEvent {
+                        //TODO duplication
+                        let event = TriggerActivatedEvent {
                             source: Some(trigger),
                             target: *other,
-                        });
+                        };
+                        commands.trigger(event);
+                        activate_trigger_events.write(event);
                     }
                 }
             }
@@ -218,7 +227,7 @@ fn handle_object_triggered(
 fn check_all_played(
     mut notes: Query<(Entity, &UntriggeredObjects)>,
     mut events: EventWriter<TriggerDeactivatedEvent>,
-    // mut next_state: ResMut<NextState<GameState>>
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     let mut all_done = true;
     for (entity, notes) in &mut notes {
@@ -230,14 +239,12 @@ fn check_all_played(
     }
 
     if all_done {
-        //TODO stop execution
-        info!("All played");
-        // next_state.set(GameState::Over);
+        next_state.set(GameState::Build);
     }
 }
 
 fn activate_trigger(
-    mut events: EventReader<TriggerActivatedEvent>,
+    cause: bevy::prelude::Trigger<TriggerActivatedEvent>,
     triggers: Query<Entity, With<Trigger>>,
     notes: Query<Entity, With<Note>>,
     assets: Res<CoreAssets>,
@@ -258,24 +265,20 @@ fn activate_trigger(
         untriggered.push(object);
     }
 
-    for event in events.read() {
-        let trigger = event.target;
-        let Ok(mut target) = commands.get_entity(trigger) else {
-            continue;
-        };
-        // add all other objects to triggers unplayed objects list
-        let mut result: Vec<Entity> = untriggered.clone();
-        result.retain(|it| it != &trigger);
+    let trigger = cause.target;
+    let Ok(mut target) = commands.get_entity(trigger) else {
+        return;
+    };
+    // add all other objects to triggers unplayed objects list
+    let mut result: Vec<Entity> = untriggered.clone();
+    result.retain(|it| it != &trigger);
 
-        // activate the trigger
-        target
-            .insert(TriggerState::Active)
-            .insert(TriggerSize::zero())
-            .insert(Svg2d(assets.trigger_icon_pause.clone()))
-            .insert(UntriggeredObjects(result));
-
-        // build effect
-    }
+    // activate the trigger
+    target
+        .insert(TriggerState::Active)
+        .insert(TriggerSize::zero())
+        .insert(Svg2d(assets.trigger_icon_pause.clone()))
+        .insert(UntriggeredObjects(result));
 }
 
 fn deactivate_trigger(
