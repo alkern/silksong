@@ -22,7 +22,7 @@ impl Plugin for PickerPlugin {
 }
 
 #[derive(Component)]
-struct ManuallyPlaced;
+pub(super) struct ManuallyPlaced;
 
 #[derive(Component, PartialEq, Debug, Copy, Clone)]
 pub(super) enum SelectedItem {
