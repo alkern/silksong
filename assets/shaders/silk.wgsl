@@ -4,6 +4,9 @@
 
 struct BackgroundMaterial {
     time: f32,
+    padding_1: f32,
+    padding_2: f32,
+    padding_3: f32,
 };
 
 @group(2) @binding(0)

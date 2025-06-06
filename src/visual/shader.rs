@@ -22,10 +22,21 @@ impl Plugin for ShaderPlugin {
 #[derive(Component)]
 struct Shader;
 
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone, Default)]
 struct SilkMaterial {
     #[uniform(0)]
     time: f32,
+    //TODO temp fix for wasm
+    // In Device::create_render_pipeline, label = 'opaque_mesh2d_pipeline'
+    // In the provided shader, the type given for group 2 binding 0 has a size of 4.
+    // As the device does not support `DownlevelFlags::BUFFER_BINDINGS_NOT_16_BYTE_ALIGNED`,
+    // the type must have a size that is a multiple of 16 bytes.
+    #[uniform(0)]
+    padding_1: f32,
+    #[uniform(0)]
+    padding_2: f32,
+    #[uniform(0)]
+    padding_3: f32,
 }
 
 impl Material2d for SilkMaterial {
@@ -48,7 +59,7 @@ fn setup(
 
     commands.spawn((
         Shader,
-        MeshMaterial2d(materials.add(SilkMaterial { time: 0.0 })),
+        MeshMaterial2d(materials.add(SilkMaterial::default())),
         Mesh2d(meshes.add(Rectangle::default())),
         Transform::from_scale(size.extend(0.0)),
     ));
