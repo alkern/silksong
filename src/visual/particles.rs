@@ -1,3 +1,5 @@
+use crate::core::game::TriggerActivatedEvent;
+use crate::core::model::TriggerColor;
 use crate::state::GameState;
 use crate::visual::color::ColorPalette;
 use bevy::platform::collections::HashMap;
@@ -9,7 +11,10 @@ pub(super) struct ParticlePlugin;
 impl Plugin for ParticlePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ParticleEffects>()
-            .add_systems(Update, handle_timers.run_if(in_state(GameState::Execute)))
+            .add_systems(
+                Update,
+                (handle_timers, spawn_on_trigger_activated).run_if(in_state(GameState::Execute)),
+            )
             .add_systems(OnExit(GameState::Execute), cleanup);
     }
 }
@@ -67,6 +72,31 @@ impl FromWorld for ParticleEffects {
 
         ParticleEffects { map }
     }
+}
+
+#[cfg(not(target_family = "wasm"))]
+fn spawn_on_trigger_activated(
+    mut events: EventReader<TriggerActivatedEvent>,
+    for_effects: Query<(&TriggerColor, &Transform)>,
+    effects: Res<ParticleEffects>,
+    mut commands: Commands,
+) {
+    for event in events.read() {
+        let trigger = event.target;
+        let (color, transform) = for_effects
+            .get(trigger)
+            .expect("every trigger must have a color and position");
+        commands.spawn((
+            ParticleEffect::new(effects.get(&color.0)),
+            ParticleTimer::new(),
+            *transform,
+        ));
+    }
+}
+
+#[cfg(target_family = "wasm")]
+fn spawn_on_trigger_activated() {
+    //not supported :(
 }
 
 fn build_effect(color: &ColorPalette) -> EffectAsset {

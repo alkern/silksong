@@ -9,6 +9,12 @@ mod shader;
 pub struct VisualPlugin;
 
 impl Plugin for VisualPlugin {
+    #[cfg(target_family = "wasm")]
+    fn build(&self, app: &mut App) {
+        app.add_plugins((ShaderPlugin));
+    }
+
+    #[cfg(not(target_family = "wasm"))]
     fn build(&self, app: &mut App) {
         app.add_plugins((ShaderPlugin, ParticlePlugin));
     }
