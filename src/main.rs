@@ -16,6 +16,8 @@ use crate::visual::VisualPlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
+use bevy_hanabi::HanabiPlugin;
+use bevy_svg::prelude::SvgPlugin;
 
 fn main() {
     App::new()
@@ -43,7 +45,8 @@ fn main() {
                 }),
         )
         // external plugins
-        .add_plugins(bevy_svg::prelude::SvgPlugin)
+        .add_plugins(SvgPlugin)
+        .add_plugins(HanabiPlugin)
         // game plugins
         .add_plugins(AudioPlugin)
         .add_plugins(CoreGamePlugin)

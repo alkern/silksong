@@ -1,11 +1,12 @@
+use crate::core::model::TriggerColor;
 use bevy::color::Srgba;
 use bevy::color::palettes::css::{
     BLUE_VIOLET, CORNFLOWER_BLUE, DARK_ORCHID, INDIGO, REBECCA_PURPLE,
 };
 use bevy::log::warn;
-use bevy::prelude::Vec2;
+use bevy::prelude::{Vec2, Vec4};
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum ColorPalette {
     #[default]
     BlueViolet,
@@ -40,5 +41,28 @@ impl ColorPalette {
                 ColorPalette::BlueViolet
             }
         }
+    }
+
+    pub fn enumerate() -> Vec<ColorPalette> {
+        vec![
+            ColorPalette::BlueViolet,
+            ColorPalette::CornflowerBlue,
+            ColorPalette::DarkOrchid,
+            ColorPalette::Indigo,
+            ColorPalette::RebeccaPurple,
+        ]
+    }
+}
+
+impl From<&ColorPalette> for Vec4 {
+    fn from(value: &ColorPalette) -> Self {
+        let rgba = value.to_rgba();
+        Vec4::new(rgba.red, rgba.green, rgba.blue, rgba.alpha)
+    }
+}
+
+impl From<&TriggerColor> for ColorPalette {
+    fn from(value: &TriggerColor) -> Self {
+        value.0
     }
 }

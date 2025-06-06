@@ -43,7 +43,7 @@ pub enum TriggerType {
     Passive,
 }
 
-#[derive(Component, Default, PartialEq, Debug)]
+#[derive(Component, Default, PartialEq, Debug, Copy, Clone)]
 pub struct TriggerColor(pub ColorPalette);
 
 impl From<&TriggerColor> for Color {

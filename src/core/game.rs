@@ -3,7 +3,10 @@ use crate::core::model::{
 };
 use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
+use crate::visual::particles::ParticleEffects;
+use crate::visual::particles::ParticleTimer;
 use bevy::prelude::*;
+use bevy_hanabi::ParticleEffect;
 use bevy_svg::prelude::{Svg, Svg2d};
 
 pub struct CoreGamePlugin;
@@ -241,6 +244,8 @@ fn activate_trigger(
     triggers: Query<Entity, With<Trigger>>,
     notes: Query<Entity, With<Note>>,
     assets: Res<CoreAssets>,
+    for_effects: Query<(&TriggerColor, &Transform)>,
+    effects: Res<ParticleEffects>,
     mut commands: Commands,
 ) {
     // collect all objects in a list template
@@ -269,6 +274,16 @@ fn activate_trigger(
             .insert(TriggerSize::zero())
             .insert(Svg2d(assets.trigger_icon_pause.clone()))
             .insert(UntriggeredObjects(result));
+
+        // build effect
+        let (color, transform) = for_effects
+            .get(trigger)
+            .expect("every trigger must have a color and position");
+        commands.spawn((
+            ParticleEffect::new(effects.get(&color.0)),
+            ParticleTimer::new(),
+            transform.clone(),
+        ));
     }
 }
 
