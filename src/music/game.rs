@@ -2,6 +2,7 @@ use crate::core::game::{LevelConfig, NotePlayedEvent};
 use crate::core::model::{Activator, Note};
 use crate::math::calculate_scale_position_by_angle;
 use crate::music::audio::PianoAudioAssets;
+use bevy::audio::Volume;
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 
@@ -56,7 +57,7 @@ fn handle_note_played(
             .spawn((
                 Name::new("Note"),
                 AudioPlayer(piano.play(played)),
-                PlaybackSettings::DESPAWN,
+                PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.5)),
             ))
             .id();
         active_player.0.insert(played.clone(), id);
