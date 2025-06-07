@@ -20,7 +20,6 @@ Licensed under either of
 ### Libraries
 
 * [bevy_svg](https://docs.rs/bevy_svg/latest/bevy_svg/)
-* [bevy_hanabi](https://docs.rs/bevy_hanabi/latest/bevy_hanabi/)
 
 ### UI
 
