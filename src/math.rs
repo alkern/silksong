@@ -2,7 +2,11 @@ use crate::music::model::Scale;
 use bevy::prelude::*;
 use std::f32::consts::PI;
 
-pub fn calculate_scale_position_by_angle(center: &Vec2, point: &Vec2, scale: &impl Scale) -> u8 {
+pub fn calculate_scale_position_by_angle(
+    center: &Vec2,
+    point: &Vec2,
+    scale: &(impl Scale + ?Sized),
+) -> u8 {
     let direction = point - center;
     let (x, y) = match direction.try_normalize() {
         None => {

@@ -1,7 +1,7 @@
 use crate::core::model::{
     Note, Trigger, TriggerColor, TriggerSize, TriggerState, TriggerType, UntriggeredObjects,
 };
-use crate::music::model::{NaturalMinorScale, Scale};
+use crate::music::model::Scale;
 use crate::state::GameState;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Svg, Svg2d};
@@ -21,7 +21,7 @@ impl Plugin for CoreGamePlugin {
             .add_systems(
                 Update,
                 (
-                    check_and_trigger_other::<NaturalMinorScale>,
+                    check_and_trigger_other,
                     draw_triggers,
                     handle_events_to_triggered_object,
                     handle_object_triggered,
@@ -38,12 +38,9 @@ impl Plugin for CoreGamePlugin {
 }
 
 #[derive(Resource)]
-pub struct LevelConfig<T>
-where
-    T: Scale,
-{
+pub struct LevelConfig {
     pub grow_factor: f32,
-    pub scale: T,
+    pub scale: Box<dyn Scale>,
 }
 
 #[derive(Resource)]
@@ -136,19 +133,17 @@ fn exit_execution(
 }
 
 /// The core game logic: check if as trigger hits a note.
-fn check_and_trigger_other<T>(
+fn check_and_trigger_other(
     triggers: Query<(Entity, &mut TriggerSize, &TriggerState, &Transform)>,
     unplayed_objects: Query<&UntriggeredObjects>,
     notes: Query<&Note>,
     positions: Query<&Transform>,
-    config: Res<LevelConfig<T>>,
+    config: Res<LevelConfig>,
     time: Res<Time>,
     mut play_note_events: EventWriter<NotePlayedEvent>,
     mut activate_trigger_events: EventWriter<TriggerActivatedEvent>,
     mut commands: Commands,
-) where
-    T: Scale,
-{
+) {
     for (trigger, mut size, trigger_state, trigger_position) in triggers {
         // update trigger state
         if !trigger_state.is_active() {

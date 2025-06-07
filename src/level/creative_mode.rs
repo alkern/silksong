@@ -55,7 +55,7 @@ impl ComputedStates for CreativeModeState {
 fn setup_config(mut commands: Commands) {
     commands.insert_resource(LevelConfig {
         grow_factor: 100.0,
-        scale: NaturalMinorScale::new(Note::A),
+        scale: Box::new(NaturalMinorScale::new(Note::A)),
     });
 }
 
