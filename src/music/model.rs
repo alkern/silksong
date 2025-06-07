@@ -7,7 +7,7 @@ pub enum Step {
     Whole,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[allow(dead_code)]
 pub enum Note {
     A,

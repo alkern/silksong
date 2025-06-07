@@ -2,15 +2,20 @@ use crate::core::game::{LevelConfig, NotePlayedEvent};
 use crate::core::model::{Activator, Note};
 use crate::math::calculate_scale_position_by_angle;
 use crate::music::audio::PianoAudioAssets;
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 
 pub struct MusicPlugin;
 
 impl Plugin for MusicPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_note_played);
+        app.init_resource::<ActivePlayer>()
+            .add_systems(Update, handle_note_played);
     }
 }
+
+#[derive(Resource, Default, Debug)]
+struct ActivePlayer(HashMap<crate::music::model::Note, Entity>);
 
 fn handle_note_played(
     mut note_played_events: EventReader<NotePlayedEvent>,
@@ -19,6 +24,7 @@ fn handle_note_played(
     level: Res<LevelConfig>,
     piano: Res<PianoAudioAssets>,
     mut commands: Commands,
+    mut active_player: ResMut<ActivePlayer>,
 ) {
     for event in note_played_events.read() {
         let Ok((_, activator)) = activators.get(event.source) else {
@@ -36,11 +42,23 @@ fn handle_note_played(
         );
         let played = level.scale.get(index);
 
+        match active_player.0.get(&played) {
+            None => {}
+            Some(id) => {
+                let _ = commands
+                    .get_entity(*id)
+                    .and_then(|mut entity| Ok(entity.despawn()));
+            }
+        }
+
         // play note
-        commands.spawn((
-            Name::new("Note"),
-            AudioPlayer(piano.play(played)),
-            PlaybackSettings::DESPAWN,
-        ));
+        let id = commands
+            .spawn((
+                Name::new("Note"),
+                AudioPlayer(piano.play(played)),
+                PlaybackSettings::DESPAWN,
+            ))
+            .id();
+        active_player.0.insert(played.clone(), id);
     }
 }
