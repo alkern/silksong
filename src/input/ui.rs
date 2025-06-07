@@ -22,7 +22,7 @@ fn setup(mut commands: Commands) {
         Node {
             // position_type: PositionType::Absolute,
             display: Display::Grid,
-            width: Val::Percent(15.0),
+            width: Val::Percent(20.0),
             height: Val::Percent(8.0),
             margin: UiRect::all(Val::Px(10.0)),
             align_self: AlignSelf::Stretch,

@@ -1,5 +1,6 @@
 use crate::core::model::{
-    Note, Trigger, TriggerColor, TriggerSize, TriggerState, TriggerType, UntriggeredObjects,
+    Activator, ActivatorColor, ActivatorSize, ActivatorState, ActivatorType, InactivatedObjects,
+    Note,
 };
 use crate::music::model::Scale;
 use crate::state::GameState;
@@ -13,25 +14,25 @@ impl Plugin for CoreGamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CoreAssets>()
             .add_event::<NotePlayedEvent>()
-            .add_event::<TriggerActivatedEvent>()
-            .add_event::<TriggerDeactivatedEvent>()
-            .add_event::<ObjectTriggeredEvent>()
+            .add_event::<ActivatorEnabledEvent>()
+            .add_event::<ActivatorDisabledEvent>()
+            .add_event::<ObjectActivatedEvent>()
             .add_event::<AllPlayedEvent>()
-            .add_observer(activate_trigger)
+            .add_observer(activate_activator)
             .add_systems(
                 Update,
                 (
-                    check_and_trigger_other,
-                    draw_triggers,
-                    handle_events_to_triggered_object,
-                    handle_object_triggered,
+                    execute_activator_and_check_collisions,
+                    draw_activator_sizes,
+                    collect_activation_events,
+                    handle_object_activated,
                     check_all_played,
                     handle_all_played,
                 )
                     .run_if(in_state(GameState::Execute))
                     .chain(),
             )
-            .add_systems(Update, deactivate_trigger)
+            .add_systems(Update, disable_activator)
             .add_systems(OnEnter(GameState::Execute), enter_execution)
             .add_systems(OnExit(GameState::Execute), exit_execution);
     }
@@ -46,16 +47,16 @@ pub struct LevelConfig {
 #[derive(Resource)]
 pub struct CoreAssets {
     pub note_icon: Handle<Svg>,
-    pub trigger_icon_pause: Handle<Svg>,
-    pub trigger_icon_play: Handle<Svg>,
+    pub activator_icon_pause: Handle<Svg>,
+    pub activator_icon_play: Handle<Svg>,
 }
 
 impl FromWorld for CoreAssets {
     fn from_world(world: &mut World) -> Self {
         CoreAssets {
             note_icon: world.load_asset("icons/music-solid.svg"),
-            trigger_icon_pause: world.load_asset("icons/circle-pause-regular.svg"),
-            trigger_icon_play: world.load_asset("icons/circle-play-regular.svg"),
+            activator_icon_pause: world.load_asset("icons/circle-pause-regular.svg"),
+            activator_icon_play: world.load_asset("icons/circle-play-regular.svg"),
         }
     }
 }
@@ -67,16 +68,16 @@ pub struct NotePlayedEvent {
 }
 
 #[derive(Event, Debug, Copy, Clone)]
-pub struct TriggerActivatedEvent {
+pub struct ActivatorEnabledEvent {
     pub source: Option<Entity>,
     pub target: Entity,
 }
 
 #[derive(Event, Debug, Deref)]
-struct TriggerDeactivatedEvent(Entity);
+struct ActivatorDisabledEvent(Entity);
 
 #[derive(Event, Debug)]
-struct ObjectTriggeredEvent {
+struct ObjectActivatedEvent {
     source: Option<Entity>,
     object: Entity,
 }
@@ -84,19 +85,21 @@ struct ObjectTriggeredEvent {
 #[derive(Event, Debug)]
 struct AllPlayedEvent;
 
-fn handle_events_to_triggered_object(
+/// Collects all events which represent an "activation" and map them to [`ObjectActivatedEvent`]s to
+/// handle similarly.
+fn collect_activation_events(
     mut note_played: EventReader<NotePlayedEvent>,
-    mut trigger_activated: EventReader<TriggerActivatedEvent>,
-    mut object_triggered: EventWriter<ObjectTriggeredEvent>,
+    mut activator_enabled: EventReader<ActivatorEnabledEvent>,
+    mut object_activated: EventWriter<ObjectActivatedEvent>,
 ) {
     note_played.read().for_each(|ev| {
-        object_triggered.write(ObjectTriggeredEvent {
+        object_activated.write(ObjectActivatedEvent {
             source: Some(ev.source),
             object: ev.note,
         });
     });
-    trigger_activated.read().for_each(|ev| {
-        object_triggered.write(ObjectTriggeredEvent {
+    activator_enabled.read().for_each(|ev| {
+        object_activated.write(ObjectActivatedEvent {
             source: ev.source,
             object: ev.target,
         });
@@ -105,18 +108,18 @@ fn handle_events_to_triggered_object(
 
 /// Set the model data up for one execution. We keep some data in memory to simplify calculations.
 fn enter_execution(
-    triggers: Query<(Entity, &TriggerType)>,
-    mut activate_triggers: EventWriter<TriggerActivatedEvent>,
+    activators: Query<(Entity, &ActivatorType)>,
+    mut enabled_activators: EventWriter<ActivatorEnabledEvent>,
     mut commands: Commands,
 ) {
-    for (entity, trigger) in &triggers {
-        if trigger == &TriggerType::Main {
+    for (entity, activator) in &activators {
+        if activator == &ActivatorType::Main {
             // TODO duplication
-            let event = TriggerActivatedEvent {
+            let event = ActivatorEnabledEvent {
                 source: None,
                 target: entity,
             };
-            activate_triggers.write(event);
+            enabled_activators.write(event);
             commands.trigger(event);
         }
     }
@@ -124,40 +127,41 @@ fn enter_execution(
 
 /// Clear the game state after an execution.
 fn exit_execution(
-    triggers: Query<Entity, With<Trigger>>,
-    mut events: EventWriter<TriggerDeactivatedEvent>,
+    activators: Query<Entity, With<Activator>>,
+    mut events: EventWriter<ActivatorDisabledEvent>,
 ) {
-    for entity in triggers {
-        events.write(TriggerDeactivatedEvent(entity));
+    for entity in activators {
+        events.write(ActivatorDisabledEvent(entity));
     }
 }
 
-/// The core game logic: check if as trigger hits a note.
-fn check_and_trigger_other(
-    triggers: Query<(Entity, &mut TriggerSize, &TriggerState, &Transform)>,
-    unplayed_objects: Query<&UntriggeredObjects>,
+/// The core game logic: increment activator and check for collisions
+fn execute_activator_and_check_collisions(
+    activators: Query<(Entity, &mut ActivatorSize, &ActivatorState, &Transform)>,
+    unplayed_objects: Query<&InactivatedObjects>,
     notes: Query<&Note>,
     positions: Query<&Transform>,
     config: Res<LevelConfig>,
     time: Res<Time>,
     mut play_note_events: EventWriter<NotePlayedEvent>,
-    mut activate_trigger_events: EventWriter<TriggerActivatedEvent>,
+    mut enable_activator_events: EventWriter<ActivatorEnabledEvent>,
     mut commands: Commands,
 ) {
-    for (trigger, mut size, trigger_state, trigger_position) in triggers {
-        // update trigger state
-        if !trigger_state.is_active() {
+    for (activator, mut size, activator_state, activator_position) in activators {
+        // grow enabled activator size
+        if !activator_state.is_active() {
             continue;
         }
         size.increment(time.delta().as_secs_f32() * config.grow_factor);
 
-        let Ok(unplayed_objects_of_trigger) = unplayed_objects.get(trigger) else {
+        let Ok(unplayed_objects_of_activator) = unplayed_objects.get(activator) else {
             // only test when unplayed objects are present
-            // should not happen, since a trigger is inactive in this condition
+            // should not happen, since an activator is disabled in this condition
             continue;
         };
 
-        for other in &unplayed_objects_of_trigger.0 {
+        // check collisions
+        for other in &unplayed_objects_of_activator.0 {
             let Ok(position) = positions.get(*other) else {
                 continue;
             };
@@ -165,44 +169,44 @@ fn check_and_trigger_other(
             if position
                 .translation
                 .xy()
-                .distance(trigger_position.translation.xy())
+                .distance(activator_position.translation.xy())
                 < **size
             {
-                // we can implement more types here, other trigger is always the fallback
+                // we can implement more types here, only activator cannot be matched with a query
                 match notes.get(*other) {
                     // unplayed is a note
                     Ok(_) => {
                         play_note_events.write(NotePlayedEvent {
-                            source: trigger,
+                            source: activator,
                             note: *other,
                         });
                     }
                     _ => {
-                        // unplayed is another trigger
+                        // unplayed is another activator
                         //TODO duplication
-                        let event = TriggerActivatedEvent {
-                            source: Some(trigger),
+                        let event = ActivatorEnabledEvent {
+                            source: Some(activator),
                             target: *other,
                         };
                         commands.trigger(event);
-                        activate_trigger_events.write(event);
+                        enable_activator_events.write(event);
                     }
                 }
             } else {
-                // since the objects are sorted relative to the trigger we can stop at the first one
-                // which is too far away
+                // since the objects are sorted relative to the activator we can stop at the first
+                // one which is too far away
                 continue;
             }
         }
     }
 }
 
-/// Visualize the size of each trigger.
-fn draw_triggers(
+/// Visualize the size of each activator.
+fn draw_activator_sizes(
     mut gizmos: Gizmos,
-    triggers: Query<(&TriggerState, &TriggerSize, &TriggerColor, &Transform)>,
+    activators: Query<(&ActivatorState, &ActivatorSize, &ActivatorColor, &Transform)>,
 ) {
-    for (state, size, color, transform) in &triggers {
+    for (state, size, color, transform) in &activators {
         if !state.is_active() {
             continue;
         }
@@ -212,17 +216,17 @@ fn draw_triggers(
     }
 }
 
-/// If a trigger hits an object it is removed from the triggers list of unplayed notes.
-fn handle_object_triggered(
-    mut object_triggered_event: EventReader<ObjectTriggeredEvent>,
-    mut all_untriggered: Query<&mut UntriggeredObjects>,
+/// If an activator hits an object it is removed from the list of unplayed objects for the activator
+fn handle_object_activated(
+    mut object_activated_event: EventReader<ObjectActivatedEvent>,
+    mut all_inactive: Query<&mut InactivatedObjects>,
 ) {
-    for event in object_triggered_event.read() {
-        if let Some(trigger) = event.source {
-            // source is only None if it is the MainTrigger on enter_execution...
+    for event in object_activated_event.read() {
+        if let Some(activator) = event.source {
+            // source is only None if it is the MainActivator on enter_execution...
 
-            if let Ok(mut untriggered) = all_untriggered.get_mut(trigger) {
-                untriggered.0.retain(|it| it != &event.object);
+            if let Ok(mut inactive) = all_inactive.get_mut(activator) {
+                inactive.0.retain(|it| it != &event.object);
             }
         }
     }
@@ -230,14 +234,14 @@ fn handle_object_triggered(
 
 /// After all notes are played the execution is done.
 fn check_all_played(
-    mut notes: Query<(Entity, &UntriggeredObjects)>,
-    mut events: EventWriter<TriggerDeactivatedEvent>,
+    mut notes: Query<(Entity, &InactivatedObjects)>,
+    mut events: EventWriter<ActivatorDisabledEvent>,
     mut all_played_events: EventWriter<AllPlayedEvent>,
 ) {
     let mut all_done = true;
     for (entity, notes) in &mut notes {
         if notes.0.is_empty() {
-            events.write(TriggerDeactivatedEvent(entity));
+            events.write(ActivatorDisabledEvent(entity));
         } else {
             all_done = false;
         }
@@ -257,55 +261,57 @@ fn handle_all_played(
     }
 }
 
-fn activate_trigger(
-    cause: bevy::prelude::Trigger<TriggerActivatedEvent>,
-    triggers: Query<Entity, With<Trigger>>,
+fn activate_activator(
+    cause: Trigger<ActivatorEnabledEvent>,
+    activators: Query<Entity, With<Activator>>,
     notes: Query<Entity, With<Note>>,
     positions: Query<&Transform>,
     assets: Res<CoreAssets>,
     mut commands: Commands,
     state: Res<State<GameState>>,
 ) {
-    // additional safety check: since events can arrive up to two updates later, this is sometimes triggered
+    // additional safety check: since events can arrive up to two updates later, this is sometimes
+    // run unnecessarily
     if *state != GameState::Execute {
         return;
     }
 
     // collect all objects in a list template
-    let mut untriggered: Vec<Entity> = Vec::new();
+    let mut inactive: Vec<Entity> = Vec::new();
     for object in &notes {
-        untriggered.push(object);
+        inactive.push(object);
     }
-    for object in &triggers {
-        untriggered.push(object);
+    for object in &activators {
+        inactive.push(object);
     }
 
-    let trigger = cause.target;
-    let Ok(mut target) = commands.get_entity(trigger) else {
+    let activator = cause.target;
+    let Ok(mut target) = commands.get_entity(activator) else {
         return;
     };
-    let trigger_position = positions
-        .get(trigger)
-        .expect("sort unplayed objects for trigger: trigger must have a position");
+    let activator_position = positions
+        .get(activator)
+        .expect("sort unplayed objects for activator: activator must have a position");
 
-    // add all other objects to triggers unplayed objects list
-    // this list is sorted by distance to the trigger
-    let mut result: Vec<Entity> = untriggered.clone();
-    result.retain(|it| it != &trigger);
-    result
-        .sort_by(|e1, e2| distance_for_sort(trigger_position.translation.xy(), e1, e2, &positions));
+    // add all other objects to the unplayed objects list for this activator.
+    // this list is sorted by distance to the activator.
+    let mut result: Vec<Entity> = inactive.clone();
+    result.retain(|it| it != &activator);
+    result.sort_by(|e1, e2| {
+        distance_for_sort(activator_position.translation.xy(), e1, e2, &positions)
+    });
 
-    // activate the trigger
+    // enable the activator
     target
-        .insert(TriggerState::Active)
-        .insert(TriggerSize::zero())
-        .insert(Svg2d(assets.trigger_icon_pause.clone()))
-        .insert(UntriggeredObjects(result));
+        .insert(ActivatorState::Enabled)
+        .insert(ActivatorSize::zero())
+        .insert(Svg2d(assets.activator_icon_pause.clone()))
+        .insert(InactivatedObjects(result));
 }
 
-/// Compare the two objects by its distance to a trigger.
+/// Compare the two objects by its distance to an activator.
 fn distance_for_sort(
-    trigger_position: Vec2,
+    activator_position: Vec2,
     e1: &Entity,
     e2: &Entity,
     positions: &Query<&Transform>,
@@ -321,22 +327,22 @@ fn distance_for_sort(
         .translation
         .xy();
 
-    pos1.distance(trigger_position)
-        .total_cmp(&pos2.distance(trigger_position))
+    pos1.distance(activator_position)
+        .total_cmp(&pos2.distance(activator_position))
 }
 
-fn deactivate_trigger(
-    mut events: EventReader<TriggerDeactivatedEvent>,
+fn disable_activator(
+    mut events: EventReader<ActivatorDisabledEvent>,
     assets: Res<CoreAssets>,
     mut commands: Commands,
 ) {
     for event in events.read() {
         commands
             .get_entity(event.0)
-            .expect("trigger should exist")
-            .remove::<UntriggeredObjects>()
-            .insert(TriggerState::Inactive)
-            .insert(TriggerSize::zero())
-            .insert(Svg2d(assets.trigger_icon_play.clone()));
+            .expect("activator should exist")
+            .remove::<InactivatedObjects>()
+            .insert(ActivatorState::Disabled)
+            .insert(ActivatorSize::zero())
+            .insert(Svg2d(assets.activator_icon_play.clone()));
     }
 }

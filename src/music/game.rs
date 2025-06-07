@@ -1,5 +1,5 @@
 use crate::core::game::{LevelConfig, NotePlayedEvent};
-use crate::core::model::{Note, Trigger};
+use crate::core::model::{Activator, Note};
 use crate::math::calculate_scale_position_by_angle;
 use crate::music::audio::PianoAudioAssets;
 use bevy::prelude::*;
@@ -14,14 +14,14 @@ impl Plugin for MusicPlugin {
 
 fn handle_note_played(
     mut note_played_events: EventReader<NotePlayedEvent>,
-    triggers: Query<(&Trigger, &Transform)>,
+    activators: Query<(&Activator, &Transform)>,
     notes: Query<(&Note, &Transform)>,
     level: Res<LevelConfig>,
     piano: Res<PianoAudioAssets>,
     mut commands: Commands,
 ) {
     for event in note_played_events.read() {
-        let Ok((_, trigger)) = triggers.get(event.source) else {
+        let Ok((_, activator)) = activators.get(event.source) else {
             continue;
         };
         let Ok((_, note)) = notes.get(event.note) else {
@@ -30,7 +30,7 @@ fn handle_note_played(
 
         // calculate the note from angle
         let index = calculate_scale_position_by_angle(
-            &trigger.translation.xy(),
+            &activator.translation.xy(),
             &note.translation.xy(),
             &*level.scale,
         );

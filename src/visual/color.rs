@@ -1,4 +1,4 @@
-use crate::core::model::TriggerColor;
+use crate::core::model::ActivatorColor;
 use bevy::color::Srgba;
 use bevy::color::palettes::css::{
     BLUE_VIOLET, CORNFLOWER_BLUE, DARK_ORCHID, INDIGO, REBECCA_PURPLE,
@@ -61,8 +61,8 @@ impl From<&ColorPalette> for Vec4 {
     }
 }
 
-impl From<&TriggerColor> for ColorPalette {
-    fn from(value: &TriggerColor) -> Self {
+impl From<&ActivatorColor> for ColorPalette {
+    fn from(value: &ActivatorColor) -> Self {
         value.0
     }
 }

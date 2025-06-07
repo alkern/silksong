@@ -5,15 +5,15 @@ use bevy::prelude::*;
 pub struct Note;
 
 #[derive(Component, Default, Debug)]
-#[require(TriggerSize, TriggerColor)]
-pub struct Trigger;
+#[require(ActivatorSize, ActivatorColor)]
+pub struct Activator;
 
 #[derive(Component, Default, PartialEq, Debug, Deref)]
-pub struct TriggerSize(f32);
+pub struct ActivatorSize(f32);
 
-impl TriggerSize {
+impl ActivatorSize {
     pub fn zero() -> Self {
-        TriggerSize(0.0)
+        ActivatorSize(0.0)
     }
 
     pub fn increment(&mut self, value: f32) {
@@ -22,35 +22,35 @@ impl TriggerSize {
 }
 
 #[derive(Component, Default, PartialEq, Debug)]
-#[require(Trigger)]
-pub enum TriggerState {
+#[require(Activator)]
+pub enum ActivatorState {
     #[default]
-    Inactive,
-    Active,
+    Disabled,
+    Enabled,
 }
 
-impl TriggerState {
+impl ActivatorState {
     pub fn is_active(&self) -> bool {
-        *self == TriggerState::Active
+        *self == ActivatorState::Enabled
     }
 }
 
 #[derive(Component, Default, PartialEq, Debug)]
-#[require(Trigger, TriggerState, TriggerSize)]
-pub enum TriggerType {
+#[require(Activator, ActivatorState, ActivatorSize)]
+pub enum ActivatorType {
     Main,
     #[default]
     Passive,
 }
 
 #[derive(Component, Default, PartialEq, Debug, Copy, Clone)]
-pub struct TriggerColor(pub ColorPalette);
+pub struct ActivatorColor(pub ColorPalette);
 
-impl From<&TriggerColor> for Color {
-    fn from(value: &TriggerColor) -> Self {
+impl From<&ActivatorColor> for Color {
+    fn from(value: &ActivatorColor) -> Self {
         value.0.as_rgba().into()
     }
 }
 
 #[derive(Component, Deref)]
-pub struct UntriggeredObjects(pub Vec<Entity>);
+pub struct InactivatedObjects(pub Vec<Entity>);

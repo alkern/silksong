@@ -49,7 +49,7 @@ fn handle_game_loop_input(
 ) {
     if objects.iter().count() == 0 {
         // Nothing is placed yet, so we cannot execute.
-        // Without this check the main trigger flickers in this case. Ugly!
+        // Without this check the main activators flickers in this case. Ugly!
         return;
     }
 

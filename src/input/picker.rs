@@ -1,5 +1,5 @@
 use crate::core::game::CoreAssets;
-use crate::core::model::{Note, TriggerColor, TriggerType};
+use crate::core::model::{ActivatorColor, ActivatorType, Note};
 use crate::state::GameState;
 use crate::visual::color::ColorPalette;
 use bevy::input::mouse::MouseButtonInput;
@@ -26,21 +26,21 @@ pub(super) struct ManuallyPlaced;
 
 #[derive(Component, PartialEq, Debug, Copy, Clone)]
 pub(super) enum SelectedItem {
-    Trigger,
+    Activator,
     Note,
 }
 
 impl SelectedItem {
     pub(super) fn switch(&self) -> SelectedItem {
         match self {
-            SelectedItem::Trigger => SelectedItem::Note,
-            SelectedItem::Note => SelectedItem::Trigger,
+            SelectedItem::Activator => SelectedItem::Note,
+            SelectedItem::Note => SelectedItem::Activator,
         }
     }
 
     pub(super) fn name(&self) -> String {
         match self {
-            SelectedItem::Trigger => "Trigger".to_string(),
+            SelectedItem::Activator => "Activator".to_string(),
             SelectedItem::Note => "Note".to_string(),
         }
     }
@@ -117,14 +117,14 @@ fn delete_object(
     mut events: EventReader<DeleteObjectEvent>,
     mut commands: Commands,
     objects: Query<(Entity, &Transform), With<ManuallyPlaced>>,
-    main_trigger: Query<&TriggerType>,
+    main_activator: Query<&ActivatorType>,
 ) {
     for event in events.read() {
         for object in &objects {
             if object.1.translation.xy().distance(event.0) < 10.0 {
-                if let Ok(trigger) = main_trigger.get(object.0) {
-                    if trigger == &TriggerType::Main {
-                        // main trigger cannot be removed
+                if let Ok(activator) = main_activator.get(object.0) {
+                    if activator == &ActivatorType::Main {
+                        // main activator cannot be removed
                         continue;
                     }
                 }
@@ -146,17 +146,17 @@ fn place_object(
         let item = selected_item.single().expect("SelectedItem must exist");
 
         match item {
-            SelectedItem::Trigger => {
+            SelectedItem::Activator => {
                 let color = ColorPalette::get_random(world_position);
 
                 commands.spawn((
                     Name::new(item.name().add(" manual")),
                     ManuallyPlaced,
-                    TriggerType::Passive,
-                    TriggerColor(color),
+                    ActivatorType::Passive,
+                    ActivatorColor(color),
                     Transform::from_translation(world_position.extend(0.0))
                         .with_scale(Vec3::splat(0.05)),
-                    Svg2d(assets.trigger_icon_play.clone()),
+                    Svg2d(assets.activator_icon_play.clone()),
                     Origin::Center,
                 ));
             }
