@@ -5,6 +5,7 @@ use crate::music::model::{NaturalMinorScale, Scale};
 use crate::state::GameState;
 use bevy::prelude::*;
 use bevy_svg::prelude::{Svg, Svg2d};
+use std::cmp::Ordering;
 
 pub struct CoreGamePlugin;
 
@@ -192,6 +193,10 @@ fn check_and_trigger_other<T>(
                         activate_trigger_events.write(event);
                     }
                 }
+            } else {
+                // since the objects are sorted relative to the trigger we can stop at the first one
+                // which is too far away
+                continue;
             }
         }
     }
@@ -261,6 +266,7 @@ fn activate_trigger(
     cause: bevy::prelude::Trigger<TriggerActivatedEvent>,
     triggers: Query<Entity, With<Trigger>>,
     notes: Query<Entity, With<Note>>,
+    positions: Query<&Transform>,
     assets: Res<CoreAssets>,
     mut commands: Commands,
     state: Res<State<GameState>>,
@@ -283,9 +289,16 @@ fn activate_trigger(
     let Ok(mut target) = commands.get_entity(trigger) else {
         return;
     };
+    let trigger_position = positions
+        .get(trigger)
+        .expect("sort unplayed objects for trigger: trigger must have a position");
+
     // add all other objects to triggers unplayed objects list
+    // this list is sorted by distance to the trigger
     let mut result: Vec<Entity> = untriggered.clone();
     result.retain(|it| it != &trigger);
+    result
+        .sort_by(|e1, e2| distance_for_sort(trigger_position.translation.xy(), e1, e2, &positions));
 
     // activate the trigger
     target
@@ -293,6 +306,28 @@ fn activate_trigger(
         .insert(TriggerSize::zero())
         .insert(Svg2d(assets.trigger_icon_pause.clone()))
         .insert(UntriggeredObjects(result));
+}
+
+/// Compare the two objects by its distance to a trigger.
+fn distance_for_sort(
+    trigger_position: Vec2,
+    e1: &Entity,
+    e2: &Entity,
+    positions: &Query<&Transform>,
+) -> Ordering {
+    let pos1 = positions
+        .get(*e1)
+        .expect("object must have a position")
+        .translation
+        .xy();
+    let pos2 = positions
+        .get(*e2)
+        .expect("object must have a position")
+        .translation
+        .xy();
+
+    pos1.distance(trigger_position)
+        .total_cmp(&pos2.distance(trigger_position))
 }
 
 fn deactivate_trigger(
