@@ -47,7 +47,9 @@ fn handle_note_played(
         match active_player.0.get(&played) {
             None => {}
             Some(id) => {
-                let _ = commands.get_entity(*id).map(|mut entity| entity.despawn());
+                if let Ok(mut e) = commands.get_entity(*id) {
+                    e.insert(PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.0)));
+                };
             }
         }
 
