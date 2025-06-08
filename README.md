@@ -4,6 +4,8 @@ A small music game for [Bevy Game Jam #6](https://itch.io/jam/bevy-jam-6) betwee
 
 I think it could be extended to a nice little puzzle game one day.
 
+Play on itch.io: [silksong](https://werkelmann.itch.io/silksong).
+
 ## License
 
 Licensed under either of
