@@ -58,7 +58,7 @@ fn handle_note_played(
             .spawn((
                 Name::new("Note"),
                 AudioPlayer(piano.play(played)),
-                PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.5)),
+                PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.3)),
             ))
             .id();
         active_player.0.insert(played, id);
