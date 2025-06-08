@@ -43,12 +43,11 @@ fn handle_note_played(
         );
         let played = level.scale.get(index);
 
+        // if a player for the selected note exists, remove it
         match active_player.0.get(&played) {
             None => {}
             Some(id) => {
-                let _ = commands
-                    .get_entity(*id)
-                    .and_then(|mut entity| Ok(entity.despawn()));
+                let _ = commands.get_entity(*id).map(|mut entity| entity.despawn());
             }
         }
 
@@ -60,6 +59,6 @@ fn handle_note_played(
                 PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.5)),
             ))
             .id();
-        active_player.0.insert(played.clone(), id);
+        active_player.0.insert(played, id);
     }
 }
