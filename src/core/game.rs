@@ -195,7 +195,7 @@ fn execute_activator_and_check_collisions(
             } else {
                 // since the objects are sorted relative to the activator we can stop at the first
                 // one which is too far away
-                continue;
+                break;
             }
         }
     }
